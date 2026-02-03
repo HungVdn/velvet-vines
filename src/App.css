@@ -1,0 +1,75 @@
+.app-container {
+  max-width: 500px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+.mode-card {
+  cursor: pointer;
+  text-align: center;
+  border-color: transparent;
+}
+
+.mode-card:hover {
+  border-color: var(--gold);
+  transform: scale(1.02);
+}
+
+.mode-card h3 {
+  color: var(--gold-light);
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.mode-card p {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.back-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: none;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  z-index: 100;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+}
