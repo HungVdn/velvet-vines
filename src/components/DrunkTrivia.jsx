@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { db } from '../firebase'
+import { ref, update } from 'firebase/database'
 
 const TRIVIA_DATA = [
     { q: "Loại cocktail nào được làm từ rượu gin, nước chanh, đường và nước có ga?", a: ["Tom Collins", "Gin Fizz", "Negroni", "Martini"], correct: 0 },
@@ -8,37 +9,26 @@ const TRIVIA_DATA = [
     { q: "Thể tích tiêu chuẩn của một chai rượu vang (ml) là bao nhiêu?", a: ["500ml", "700ml", "750ml", "1000ml"], correct: 2 },
 ]
 
-export default function DrunkTrivia({ onBack }) {
-    const [currentQ, setCurrentQ] = useState(null)
-    const [timer, setTimer] = useState(10)
-    const [score, setScore] = useState(0)
-    const [gameOver, setGameOver] = useState(false)
-    const [feedback, setFeedback] = useState(null)
-
-    useEffect(() => {
-        nextQuestion()
-    }, [])
-
-    useEffect(() => {
-        if (timer > 0 && currentQ && !feedback) {
-            const t = setTimeout(() => setTimer(timer - 1), 1000)
-            return () => clearTimeout(t)
-        } else if (timer === 0 && !feedback) {
-            handleAnswer(-1) // Time out
-        }
-    }, [timer, currentQ, feedback])
+export default function DrunkTrivia({ onBack, isAdmin, roomId, roomState }) {
+    const qIndex = roomState?.triviaIndex || 0
+    const currentQ = TRIVIA_DATA[qIndex]
+    const feedback = roomState?.triviaFeedback || null
 
     const nextQuestion = () => {
+        if (!isAdmin) return
         const randomIndex = Math.floor(Math.random() * TRIVIA_DATA.length)
-        setCurrentQ(TRIVIA_DATA[randomIndex])
-        setTimer(10)
-        setFeedback(null)
+        update(ref(db, `rooms/${roomId}`), {
+            triviaIndex: randomIndex,
+            triviaFeedback: null
+        })
     }
 
     const handleAnswer = (index) => {
+        if (!isAdmin || feedback) return
         const isCorrect = index === currentQ.correct
-        setFeedback(isCorrect ? 'Chính xác!' : 'Sai rồi! Uống đi.')
-        if (isCorrect) setScore(score + 1)
+        const newFeedback = isCorrect ? 'Chính xác!' : 'Sai rồi! Uống đi.'
+
+        update(ref(db, `rooms/${roomId}`), { triviaFeedback: newFeedback })
 
         setTimeout(() => {
             nextQuestion()
@@ -52,10 +42,6 @@ export default function DrunkTrivia({ onBack }) {
 
             {currentQ && (
                 <div className="trivia-screen">
-                    <div className="timer-bar">
-                        <div className="timer-fill" style={{ width: `${(timer / 10) * 100}%` }}></div>
-                    </div>
-
                     <div className="premium-card trivia-card">
                         <p className="question-text">{currentQ.q}</p>
                         <div className="options-grid">
@@ -63,14 +49,16 @@ export default function DrunkTrivia({ onBack }) {
                                 <button
                                     key={i}
                                     className={`option-btn ${feedback ? (i === currentQ.correct ? 'correct' : 'wrong') : ''}`}
-                                    onClick={() => !feedback && handleAnswer(i)}
-                                    disabled={!!feedback}
+                                    onClick={() => handleAnswer(i)}
+                                    disabled={!isAdmin || !!feedback}
                                 >
                                     {opt}
                                 </button>
                             ))}
                         </div>
                     </div>
+
+                    {!isAdmin && !feedback && <p className="subtitle">Chờ Quản trị viên trả lời...</p>}
 
                     {feedback && (
                         <div className="feedback-overlay animate-fade">

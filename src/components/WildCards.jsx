@@ -1,58 +1,46 @@
-import { useState, useEffect } from 'react'
+import { db } from '../firebase'
+import { ref, update } from 'firebase/database'
 
 const WILD_CARDS_DATA = [
-    { type: 'Luật chơi', text: 'Nhấp môi Quý ông: Mỗi khi nam giới uống, họ phải nâng ly chúc mừng các quý cô sang trọng trong phòng.' },
-    { type: 'Thử thách', text: 'Chuyên gia nếm rượu: Hãy bịt mắt và đoán đồ uống của người bên trái bạn. Nếu đoán sai, nhấp 2 hơi.' },
-    { type: 'Nhấp môi', text: 'Giao lưu: Mọi người cùng nâng ly và nhấp một hơi.' },
-    { type: 'Luật chơi', text: 'Sự im lặng là Vàng: Không ai được nói từ "Uống" hoặc "Nhấp". Vi phạm sẽ phải nhấp 1 hơi.' },
-    { type: 'Thử thách', text: 'Giọng nói Nhung lụa: Nói bằng tông giọng "sang chảnh" nhất của bạn trong 3 vòng tới.' },
-    { type: 'Nhấp môi', text: 'Thác đổ: Bắt đầu uống; người bên trái bạn không được dừng lại cho đến khi bạn dừng, và cứ thế tiếp tục.' },
-    { type: 'Luật chơi', text: 'Ga lăng: Bạn phải kéo ghế cho bất kỳ ai đứng dậy. Quên ư? Nhấp môi.' },
-    { type: 'Thử thách', text: 'Kẻ sành sỏi: Thuyết phục mọi người trong 30 giây tại sao bạn nên là "VIP của đêm nay".' },
+  { type: 'Luật chơi', text: 'Nhấp môi Quý ông: Mỗi khi nam giới uống, họ phải nâng ly chúc mừng các quý cô sang trọng trong phòng.' },
+  { type: 'Thử thách', text: 'Chuyên gia nếm rượu: Hãy bịt mắt và đoán đồ uống của người bên trái bạn. Nếu đoán sai, nhấp 2 hơi.' },
+  { type: 'Nhấp môi', text: 'Giao lưu: Mọi người cùng nâng ly và nhấp một hơi.' },
+  { type: 'Luật chơi', text: 'Sự im lặng là Vàng: Không ai được nói từ "Uống" hoặc "Nhấp". Vi phạm sẽ phải nhấp 1 hơi.' },
+  { type: 'Thử thách', text: 'Giọng nói Nhung lụa: Nói bằng tông giọng "sang chảnh" nhất của bạn trong 3 vòng tới.' },
+  { type: 'Nhấp môi', text: 'Thác đổ: Bắt đầu uống; người bên trái bạn không được dừng lại cho đến khi bạn dừng, và cứ thế tiếp tục.' },
+  { type: 'Luật chơi', text: 'Ga lăng: Bạn phải kéo ghế cho bất kỳ ai đứng dậy. Quên ư? Nhấp môi.' },
+  { type: 'Thử thách', text: 'Kẻ sành sỏi: Thuyết phục mọi người trong 30 giây tại sao bạn nên là "VIP của đêm nay".' },
 ]
 
-export default function WildCards({ onBack }) {
-    const [currentCard, setCurrentCard] = useState(null)
-    const [deck, setDeck] = useState([])
+export default function WildCards({ onBack, isAdmin, roomId, roomState }) {
+  const cardIndex = roomState?.wildCardsIndex || 0
+  const currentCard = WILD_CARDS_DATA[cardIndex]
 
-    useEffect(() => {
-        shuffleDeck()
-    }, [])
+  const nextCard = () => {
+    if (!isAdmin) return
+    const nextIndex = (cardIndex + 1) % WILD_CARDS_DATA.length
+    update(ref(db, `rooms/${roomId}`), { wildCardsIndex: nextIndex })
+  }
 
-    const shuffleDeck = () => {
-        const shuffled = [...WILD_CARDS_DATA].sort(() => Math.random() - 0.5)
-        setDeck(shuffled)
-        setCurrentCard(shuffled[0])
-    }
+  return (
+    <div className="game-container animate-fade">
+      <button className="back-button" onClick={onBack}>← Sảnh chờ</button>
 
-    const nextCard = () => {
-        const currentIndex = deck.indexOf(currentCard)
-        if (currentIndex < deck.length - 1) {
-            setCurrentCard(deck[currentIndex + 1])
-        } else {
-            shuffleDeck()
-        }
-    }
+      <div className="game-header">
+        <h2 className="gold-text">Lá Bài Hoang Dã</h2>
+      </div>
 
-    return (
-        <div className="game-container animate-fade">
-            <button className="back-button" onClick={onBack}>← Sảnh chờ</button>
+      <div className="card-display" onClick={nextCard}>
+        {currentCard && (
+          <div className="premium-card game-card">
+            <span className="card-type">{currentCard.type}</span>
+            <p className="card-text">{currentCard.text}</p>
+            {isAdmin && <div className="card-footer">chạm để tiếp tục</div>}
+          </div>
+        )}
+      </div>
 
-            <div className="game-header">
-                <h2 className="gold-text">Lá Bài Hoang Dã</h2>
-            </div>
-
-            <div className="card-display" onClick={nextCard}>
-                {currentCard && (
-                    <div className="premium-card game-card">
-                        <span className="card-type">{currentCard.type}</span>
-                        <p className="card-text">{currentCard.text}</p>
-                        <div className="card-footer">chạm để tiếp tục</div>
-                    </div>
-                )}
-            </div>
-
-            <style jsx>{`
+      <style jsx>{`
         .game-header { margin-bottom: 2rem; }
         .card-display {
           perspective: 1000px;
@@ -96,6 +84,6 @@ export default function WildCards({ onBack }) {
           to { transform: translateY(0) rotateX(0); opacity: 1; }
         }
       `}</style>
-        </div>
-    )
+    </div>
+  )
 }

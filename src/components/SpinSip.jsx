@@ -1,30 +1,36 @@
-import { useState, useRef } from 'react'
+import { db } from '../firebase'
+import { ref, update } from 'firebase/database'
 
 const WHEEL_OPTIONS = [
     "Nhấp 1 Hơi", "Mời 2 Hơi", "Cả Hội Nhấp", "Thật hay Nhấp",
     "Thách hay Nhấp", "Cụng Ly!", "Uống Giao Lưu", "Lượt An Toàn"
 ]
 
-export default function SpinSip({ onBack }) {
-    const [rotation, setRotation] = useState(0)
-    const [isSpinning, setIsSpinning] = useState(false)
-    const [result, setResult] = useState('')
-    const soundRef = useRef(null)
+export default function SpinSip({ onBack, isAdmin, roomId, roomState }) {
+    const rotation = roomState?.spinRotation || 0
+    const result = roomState?.spinResult || ''
+    const isSpinning = roomState?.isSpinning || false
 
     const spinWheel = () => {
-        if (isSpinning) return
-
-        setIsSpinning(true)
-        setResult('')
+        if (!isAdmin || isSpinning) return
 
         const newRotation = rotation + 1800 + Math.floor(Math.random() * 360)
-        setRotation(newRotation)
+
+        update(ref(db, `rooms/${roomId}`), {
+            isSpinning: true,
+            spinRotation: newRotation,
+            spinResult: ''
+        })
 
         setTimeout(() => {
-            setIsSpinning(false)
             const actualRotation = newRotation % 360
             const index = Math.floor(((360 - actualRotation + (360 / WHEEL_OPTIONS.length / 2)) % 360) / (360 / WHEEL_OPTIONS.length))
-            setResult(WHEEL_OPTIONS[index])
+            const newResult = WHEEL_OPTIONS[index]
+
+            update(ref(db, `rooms/${roomId}`), {
+                isSpinning: false,
+                spinResult: newResult
+            })
         }, 4000)
     }
 
@@ -52,13 +58,16 @@ export default function SpinSip({ onBack }) {
             </div>
 
             <div className="wheel-controls">
-                <button
-                    className="premium-button spin-btn"
-                    onClick={spinWheel}
-                    disabled={isSpinning}
-                >
-                    {isSpinning ? 'Đang đợi...' : 'Quay Vòng Quay'}
-                </button>
+                {isAdmin && (
+                    <button
+                        className="premium-button spin-btn"
+                        onClick={spinWheel}
+                        disabled={isSpinning}
+                    >
+                        {isSpinning ? 'Đang quay...' : 'Quay Vòng Quay'}
+                    </button>
+                )}
+                {!isAdmin && isSpinning && <p className="subtitle">Vòng quay đang quay...</p>}
             </div>
 
             {result && !isSpinning && (

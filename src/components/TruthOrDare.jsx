@@ -1,22 +1,28 @@
-import { useState, useEffect } from 'react'
+import { db } from '../firebase'
+import { ref, update } from 'firebase/database'
 import { TRUTH_OR_DARE_DATA } from '../data/truthOrDare'
 
-export default function TruthOrDare({ onBack }) {
-    const [currentCard, setCurrentCard] = useState(null)
-    const [filter, setFilter] = useState('all') // 'all', 'truth', 'dare', 'drink'
+export default function TruthOrDare({ onBack, isAdmin, roomId, roomState }) {
+    const cardIndex = roomState?.todIndex || 0
+    const filter = roomState?.todFilter || 'all'
+    const currentCard = TRUTH_OR_DARE_DATA[cardIndex]
 
     const getRandomCard = (type) => {
+        if (!isAdmin) return
+
         let pool = TRUTH_OR_DARE_DATA
         if (type && type !== 'all') {
             pool = TRUTH_OR_DARE_DATA.filter(card => card.type === type)
         }
-        const randomIndex = Math.floor(Math.random() * pool.length)
-        setCurrentCard(pool[randomIndex])
-    }
 
-    useEffect(() => {
-        getRandomCard()
-    }, [])
+        const randomCard = pool[Math.floor(Math.random() * pool.length)]
+        const globalIndex = TRUTH_OR_DARE_DATA.findIndex(c => c.id === randomCard.id)
+
+        update(ref(db, `rooms/${roomId}`), {
+            todIndex: globalIndex,
+            todFilter: type
+        })
+    }
 
     return (
         <div className="game-container animate-fade">
@@ -24,24 +30,16 @@ export default function TruthOrDare({ onBack }) {
             <h2 className="gold-text">Sự thật hay Thách thức</h2>
 
             <div className="filter-controls">
-                <button
-                    className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-                    onClick={() => setFilter('all')}
-                >
-                    Ngẫu nhiên
-                </button>
-                <button
-                    className={`filter-btn ${filter === 'truth' ? 'active' : ''}`}
-                    onClick={() => setFilter('truth')}
-                >
-                    Sự thật
-                </button>
-                <button
-                    className={`filter-btn ${filter === 'dare' ? 'active' : ''}`}
-                    onClick={() => setFilter('dare')}
-                >
-                    Thách thức
-                </button>
+                {['all', 'truth', 'dare'].map((f) => (
+                    <button
+                        key={f}
+                        className={`filter-btn ${filter === f ? 'active' : ''}`}
+                        onClick={() => getRandomCard(f)}
+                        disabled={!isAdmin}
+                    >
+                        {f === 'all' ? 'Ngẫu nhiên' : f === 'truth' ? 'Sự thật' : 'Thách thức'}
+                    </button>
+                ))}
             </div>
 
             <div className="card-display" onClick={() => getRandomCard(filter)}>
@@ -52,9 +50,10 @@ export default function TruthOrDare({ onBack }) {
                                 currentCard.type === 'dare' ? 'Thách thức' : 'Nhấp môi'}
                         </span>
                         <p className="card-text">{currentCard.content}</p>
-                        <div className="card-footer">chạm để tiếp tục</div>
+                        {isAdmin && <div className="card-footer">chạm để tiếp tục</div>}
                     </div>
                 )}
+                {!isAdmin && <div className="card-footer">Đang đợi Quản trị viên...</div>}
             </div>
 
             <style jsx>{`

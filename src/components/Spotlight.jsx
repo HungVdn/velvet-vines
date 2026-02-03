@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { db } from '../firebase'
+import { ref, update } from 'firebase/database'
 
-export default function Spotlight({ onBack }) {
-    const [players, setPlayers] = useState([])
-    const [playerName, setPlayerName] = useState('')
-    const [isStarted, setIsStarted] = useState(false)
-    const [currentQuestion, setCurrentQuestion] = useState('')
+export default function Spotlight({ onBack, isAdmin, roomId, roomState }) {
+    const isStarted = roomState?.spotlightStarted || false
+    const currentQuestion = roomState?.spotlightQuestion || ''
 
     const QUESTIONS = [
         "Ai có khả năng sẽ bao cả bàn nhất?",
@@ -14,23 +13,19 @@ export default function Spotlight({ onBack }) {
         "Ai có khả năng sẽ bắt đầu màn nâng ly chúc mừng?",
     ]
 
-    const addPlayer = () => {
-        if (playerName.trim()) {
-            setPlayers([...players, playerName.trim()])
-            setPlayerName('')
-        }
-    }
-
     const startGame = () => {
-        if (players.length >= 2) {
-            setIsStarted(true)
-            nextRound()
-        }
+        if (!isAdmin) return
+        const randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
+        update(ref(db, `rooms/${roomId}`), {
+            spotlightStarted: true,
+            spotlightQuestion: randomQuestion
+        })
     }
 
     const nextRound = () => {
+        if (!isAdmin) return
         const randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
-        setCurrentQuestion(randomQuestion)
+        update(ref(db, `rooms/${roomId}`), { spotlightQuestion: randomQuestion })
     }
 
     return (
@@ -40,29 +35,20 @@ export default function Spotlight({ onBack }) {
 
             {!isStarted ? (
                 <div className="setup-screen">
-                    <p className="subtitle">Thêm ít nhất 2 khách mời để bắt đầu</p>
-                    <div className="input-group">
-                        <input
-                            type="text"
-                            value={playerName}
-                            onChange={(e) => setPlayerName(e.target.value)}
-                            placeholder="Tên khách mời"
-                            className="premium-input"
-                        />
-                        <button className="premium-button add-btn" onClick={addPlayer}>Thêm</button>
+                    <div className="premium-card waiting-card">
+                        <p className="subtitle">
+                            {isAdmin ? "Sẵn sàng chưa? Nhấn để bắt đầu!" : "Đang đợi Quản trị viên bắt đầu..."}
+                        </p>
+                        {isAdmin && (
+                            <button className="premium-button start-btn" onClick={startGame}>Bắt đầu trò chơi</button>
+                        )}
                     </div>
-                    <div className="player-list">
-                        {players.map((p, i) => (
-                            <span key={i} className="player-tag">{p}</span>
-                        ))}
-                    </div>
-                    <button className="premium-button start-btn" onClick={startGame}>Bắt đầu trò chơi</button>
                 </div>
             ) : (
                 <div className="question-screen">
                     <div className="premium-card game-card" onClick={nextRound}>
                         <p className="question">{currentQuestion}</p>
-                        <div className="card-footer">3... 2... 1... Chỉ tay!</div>
+                        <div className="card-footer">3... 2... 1... Chỉ tay! {isAdmin && "(Chạm để đổi)"}</div>
                     </div>
                 </div>
             )}
