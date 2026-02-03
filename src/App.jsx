@@ -7,6 +7,7 @@ import DrunkTrivia from './components/DrunkTrivia'
 import TruthOrDare from './components/TruthOrDare'
 import Lobby from './components/Lobby'
 import AdminPanel from './components/AdminPanel'
+import PartyRoom from './components/PartyRoom'
 import { db } from './firebase'
 import { ref, onValue, set, update, onDisconnect, remove } from 'firebase/database'
 
@@ -60,17 +61,29 @@ function App() {
       unsubscribeRoom()
       unsubscribePlayers()
     }
-  }, [userData?.roomId])
+  }, [userData?.roomId, userData?.id, userData?.isAdmin, userData?.nickname])
 
   const handleJoin = (data) => {
+    const { nickname, passcode } = data
     const userId = Math.random().toString(36).substring(2, 9)
-    const newUser = { ...data, id: userId }
+    const fixedRoomId = 'VELVET_VINES_PARTY' // Single fixed room
 
-    if (data.isAdmin) {
-      // Initialize room if admin
-      set(ref(db, `rooms/${data.roomId}`), {
+    let isAdmin = false
+    if (passcode === '230502') {
+      isAdmin = true
+    } else if (passcode === 'ForeverAlone') {
+      isAdmin = false
+    } else {
+      return alert('Mã truy cập không chính xác!')
+    }
+
+    const newUser = { nickname, roomId: fixedRoomId, isAdmin, id: userId }
+
+    if (isAdmin) {
+      // Initialize/Reset room if admin enters
+      update(ref(db, `rooms/${fixedRoomId}`), {
         gameMode: null,
-        createdAt: Date.now()
+        adminId: userId
       })
     }
     setUserData(newUser)
@@ -93,6 +106,7 @@ function App() {
     }
 
     switch (gameMode) {
+      case 'party-room': return <PartyRoom {...commonProps} players={players} />
       case 'wild-cards': return <WildCards {...commonProps} />
       case 'truth-or-dare': return <TruthOrDare {...commonProps} />
       case 'spotlight': return <Spotlight {...commonProps} />
@@ -112,13 +126,12 @@ function App() {
         <div className="menu-screen animate-fade">
           <header className="hero">
             <h1 className="gold-text">Nhung & Rượu</h1>
-            <p className="subtitle">Mã phòng: <span className="gold-text">{userData.roomId}</span></p>
+            <p className="subtitle">Phiên bản Đặc biệt dành cho Tiệc tùng</p>
           </header>
 
           <main className="mode-grid">
             {userData.isAdmin ? (
               <AdminPanel
-                roomId={userData.roomId}
                 players={players}
                 onSelectMode={setGlobalMode}
                 onRemovePlayer={removePlayer}

@@ -1,5 +1,6 @@
-export default function AdminPanel({ roomId, players, onSelectMode, onRemovePlayer }) {
+export default function AdminPanel({ players, onSelectMode, onRemovePlayer }) {
     const modes = [
+        { id: 'party-room', name: 'Phòng Tiệc' },
         { id: 'wild-cards', name: 'Lá Bài Hoang Dã' },
         { id: 'truth-or-dare', name: 'Sự thật hay Thách thức' },
         { id: 'spotlight', name: 'Tâm Điểm' },
@@ -11,9 +12,6 @@ export default function AdminPanel({ roomId, players, onSelectMode, onRemovePlay
         <div className="admin-panel animate-fade">
             <div className="admin-header">
                 <h2 className="gold-text">Bảng Điều Khiển Admin</h2>
-                <div className="room-info">
-                    Mã phòng: <span className="room-code">{roomId}</span>
-                </div>
             </div>
 
             <div className="admin-grid">

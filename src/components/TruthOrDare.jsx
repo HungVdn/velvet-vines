@@ -15,6 +15,7 @@ export default function TruthOrDare({ onBack, isAdmin, roomId, roomState }) {
             pool = TRUTH_OR_DARE_DATA.filter(card => card.type === type)
         }
 
+        // eslint-disable-next-line react-hooks/purity
         const randomCard = pool[Math.floor(Math.random() * pool.length)]
         const globalIndex = TRUTH_OR_DARE_DATA.findIndex(c => c.id === randomCard.id)
 

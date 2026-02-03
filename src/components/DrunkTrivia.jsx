@@ -16,6 +16,7 @@ export default function DrunkTrivia({ onBack, isAdmin, roomId, roomState }) {
 
     const nextQuestion = () => {
         if (!isAdmin) return
+        // eslint-disable-next-line react-hooks/purity
         const randomIndex = Math.floor(Math.random() * TRIVIA_DATA.length)
         update(ref(db, `rooms/${roomId}`), {
             triviaIndex: randomIndex,
