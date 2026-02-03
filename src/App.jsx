@@ -4,12 +4,14 @@ import WildCards from './components/WildCards'
 import Spotlight from './components/Spotlight'
 import SpinSip from './components/SpinSip'
 import DrunkTrivia from './components/DrunkTrivia'
+import TruthOrDare from './components/TruthOrDare'
 
 function App() {
   const [gameMode, setGameMode] = useState(null)
 
   const modes = [
     { id: 'wild-cards', name: 'Lá Bài Hoang Dã', description: 'Luật chơi, Thử thách & Nhấp môi' },
+    { id: 'truth-or-dare', name: 'Sự thật hay Thách thức', description: '130+ Thử thách & Câu hỏi' },
     { id: 'spotlight', name: 'Tâm Điểm', description: 'Ai dễ làm gì nhất...' },
     { id: 'spin-sip', name: 'Vòng Quay Nhấp Môi', description: 'Vòng quay May mắn (hoặc Say xỉn)' },
     { id: 'trivia', name: 'Đố Vui Nhậu Nhẹt', description: 'Trắc nghiệm Tốc độ' },
@@ -18,6 +20,7 @@ function App() {
   const renderGame = () => {
     switch (gameMode) {
       case 'wild-cards': return <WildCards onBack={() => setGameMode(null)} />
+      case 'truth-or-dare': return <TruthOrDare onBack={() => setGameMode(null)} />
       case 'spotlight': return <Spotlight onBack={() => setGameMode(null)} />
       case 'spin-sip': return <SpinSip onBack={() => setGameMode(null)} />
       case 'trivia': return <DrunkTrivia onBack={() => setGameMode(null)} />

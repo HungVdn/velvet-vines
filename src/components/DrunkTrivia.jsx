@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 
 const TRIVIA_DATA = [
-    { q: "Which cocktail is made with gin, lemon juice, sugar, and carbonated water?", a: ["Tom Collins", "Gin Fizz", "Negroni", "Martini"], correct: 0 },
-    { q: "What is the main ingredient of Japanese Sake?", a: ["Wheat", "Potato", "Rice", "Barley"], correct: 2 },
-    { q: "In which country did the Mojito originate?", a: ["Mexico", "Cuba", "Brazil", "Spain"], correct: 1 },
-    { q: "Which spirit is known as 'The Green Fairy'?", a: ["Chartreuse", "Midori", "Absinthe", "Jägermeister"], correct: 2 },
-    { q: "What is the standard volume of a bottle of wine (ml)?", a: ["500ml", "700ml", "750ml", "1000ml"], correct: 2 },
+    { q: "Loại cocktail nào được làm từ rượu gin, nước chanh, đường và nước có ga?", a: ["Tom Collins", "Gin Fizz", "Negroni", "Martini"], correct: 0 },
+    { q: "Thành phần chính của rượu Sake Nhật Bản là gì?", a: ["Lúa mì", "Khoai tây", "Gạo", "Lúa mạch"], correct: 2 },
+    { q: "Rượu Mojito có nguồn gốc từ quốc gia nào?", a: ["Mexico", "Cuba", "Brazil", "Tây Ban Nha"], correct: 1 },
+    { q: "Loại rượu nào được mệnh danh là 'Nàng Tiên Xanh'?", a: ["Chartreuse", "Midori", "Absinthe", "Jägermeister"], correct: 2 },
+    { q: "Thể tích tiêu chuẩn của một chai rượu vang (ml) là bao nhiêu?", a: ["500ml", "700ml", "750ml", "1000ml"], correct: 2 },
 ]
 
 export default function DrunkTrivia({ onBack }) {
@@ -37,7 +37,7 @@ export default function DrunkTrivia({ onBack }) {
 
     const handleAnswer = (index) => {
         const isCorrect = index === currentQ.correct
-        setFeedback(isCorrect ? 'Correct!' : 'Wrong! Drink Up.')
+        setFeedback(isCorrect ? 'Chính xác!' : 'Sai rồi! Uống đi.')
         if (isCorrect) setScore(score + 1)
 
         setTimeout(() => {
@@ -47,8 +47,8 @@ export default function DrunkTrivia({ onBack }) {
 
     return (
         <div className="game-container animate-fade">
-            <button className="back-button" onClick={onBack}>← Lobby</button>
-            <h2 className="gold-text">Drunk Trivia</h2>
+            <button className="back-button" onClick={onBack}>← Sảnh chờ</button>
+            <h2 className="gold-text">Đố Vui Nhậu Nhẹt</h2>
 
             {currentQ && (
                 <div className="trivia-screen">
@@ -74,7 +74,7 @@ export default function DrunkTrivia({ onBack }) {
 
                     {feedback && (
                         <div className="feedback-overlay animate-fade">
-                            <h3 className={feedback.startsWith('Correct') ? 'gold-text' : ''}>{feedback}</h3>
+                            <h3 className={feedback.startsWith('Chính xác') ? 'gold-text' : ''}>{feedback}</h3>
                         </div>
                     )}
                 </div>

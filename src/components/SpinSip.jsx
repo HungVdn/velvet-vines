@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react'
 
 const WHEEL_OPTIONS = [
-    "Take 1 Sip", "Give 2 Sips", "Everyone Sips", "Truth or Sip",
-    "Dare or Sip", "Shot!", "Social Drink", "Safe Pass"
+    "Nhấp 1 Hơi", "Mời 2 Hơi", "Cả Hội Nhấp", "Thật hay Nhấp",
+    "Thách hay Nhấp", "Cụng Ly!", "Uống Giao Lưu", "Lượt An Toàn"
 ]
 
 export default function SpinSip({ onBack }) {
@@ -30,8 +30,8 @@ export default function SpinSip({ onBack }) {
 
     return (
         <div className="game-container animate-fade">
-            <button className="back-button" onClick={onBack}>← Lobby</button>
-            <h2 className="gold-text">Spin & Sip</h2>
+            <button className="back-button" onClick={onBack}>← Sảnh chờ</button>
+            <h2 className="gold-text">Vòng Quay Nhấp Môi</h2>
 
             <div className="wheel-wrapper">
                 <div className="wheel-pointer"></div>
@@ -57,7 +57,7 @@ export default function SpinSip({ onBack }) {
                     onClick={spinWheel}
                     disabled={isSpinning}
                 >
-                    {isSpinning ? 'Waiting...' : 'Spin the Wheel'}
+                    {isSpinning ? 'Đang đợi...' : 'Quay Vòng Quay'}
                 </button>
             </div>
 

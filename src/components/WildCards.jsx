@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 
 const WILD_CARDS_DATA = [
-    { type: 'Rule', text: 'Gentleman\'s Sip: Every time a man drinks, he must toast to the refined ladies of the lounge.' },
-    { type: 'Dare', text: 'The Sommelier: Blindfold yourself and guess the drink of the person to your left. If you fail, take 2 sips.' },
-    { type: ' Sip', text: 'Social: Everyone raises their glass for a group sip.' },
-    { type: 'Rule', text: 'The Golden Silence: No one can say the word "Drink" or "Sip". Penalty is 1 sip.' },
-    { type: 'Dare', text: 'The Velvet Voice: Speak in your most "sophisticated" accent for the next 3 rounds.' },
-    { type: 'Sip', text: 'Waterfall: Start drinking; the person to your left can\'t stop until you do, and so on.' },
-    { type: 'Rule', text: 'Chivalry: You must pull out the chair for anyone who gets up. Forget? Sip.' },
-    { type: 'Dare', text: 'The Lounge Lizard: Give a 30-second smooth-talking pitch for why you should be the "VIP of the Night".' },
+    { type: 'Luật chơi', text: 'Nhấp môi Quý ông: Mỗi khi nam giới uống, họ phải nâng ly chúc mừng các quý cô sang trọng trong phòng.' },
+    { type: 'Thử thách', text: 'Chuyên gia nếm rượu: Hãy bịt mắt và đoán đồ uống của người bên trái bạn. Nếu đoán sai, nhấp 2 hơi.' },
+    { type: 'Nhấp môi', text: 'Giao lưu: Mọi người cùng nâng ly và nhấp một hơi.' },
+    { type: 'Luật chơi', text: 'Sự im lặng là Vàng: Không ai được nói từ "Uống" hoặc "Nhấp". Vi phạm sẽ phải nhấp 1 hơi.' },
+    { type: 'Thử thách', text: 'Giọng nói Nhung lụa: Nói bằng tông giọng "sang chảnh" nhất của bạn trong 3 vòng tới.' },
+    { type: 'Nhấp môi', text: 'Thác đổ: Bắt đầu uống; người bên trái bạn không được dừng lại cho đến khi bạn dừng, và cứ thế tiếp tục.' },
+    { type: 'Luật chơi', text: 'Ga lăng: Bạn phải kéo ghế cho bất kỳ ai đứng dậy. Quên ư? Nhấp môi.' },
+    { type: 'Thử thách', text: 'Kẻ sành sỏi: Thuyết phục mọi người trong 30 giây tại sao bạn nên là "VIP của đêm nay".' },
 ]
 
 export default function WildCards({ onBack }) {
@@ -36,10 +36,10 @@ export default function WildCards({ onBack }) {
 
     return (
         <div className="game-container animate-fade">
-            <button className="back-button" onClick={onBack}>← Lobby</button>
+            <button className="back-button" onClick={onBack}>← Sảnh chờ</button>
 
             <div className="game-header">
-                <h2 className="gold-text">Wild Cards</h2>
+                <h2 className="gold-text">Lá Bài Hoang Dã</h2>
             </div>
 
             <div className="card-display" onClick={nextCard}>
@@ -47,7 +47,7 @@ export default function WildCards({ onBack }) {
                     <div className="premium-card game-card">
                         <span className="card-type">{currentCard.type}</span>
                         <p className="card-text">{currentCard.text}</p>
-                        <div className="card-footer">tap to continue</div>
+                        <div className="card-footer">chạm để tiếp tục</div>
                     </div>
                 )}
             </div>

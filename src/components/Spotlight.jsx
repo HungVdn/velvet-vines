@@ -7,11 +7,11 @@ export default function Spotlight({ onBack }) {
     const [currentQuestion, setCurrentQuestion] = useState('')
 
     const QUESTIONS = [
-        "Who is most likely to buy everyone a round?",
-        "Who is most likely to end up on the dance floor first?",
-        "Who is most likely to forget their tab at the end of the night?",
-        "Who is most likely to be the designated driver?",
-        "Who is most likely to start a toast?",
+        "Ai có khả năng sẽ bao cả bàn nhất?",
+        "Ai có khả năng sẽ là người đầu tiên nhảy nhót?",
+        "Ai có khả năng sẽ quên thanh toán hóa đơn vào cuối buổi nhất?",
+        "Ai có khả năng sẽ là người lái xe hộ (tỉnh táo nhất)?",
+        "Ai có khả năng sẽ bắt đầu màn nâng ly chúc mừng?",
     ]
 
     const addPlayer = () => {
@@ -35,34 +35,34 @@ export default function Spotlight({ onBack }) {
 
     return (
         <div className="game-container animate-fade">
-            <button className="back-button" onClick={onBack}>← Lobby</button>
-            <h2 className="gold-text">The Spotlight</h2>
+            <button className="back-button" onClick={onBack}>← Sảnh chờ</button>
+            <h2 className="gold-text">Tâm Điểm</h2>
 
             {!isStarted ? (
                 <div className="setup-screen">
-                    <p className="subtitle">Add at least 2 guests to start</p>
+                    <p className="subtitle">Thêm ít nhất 2 khách mời để bắt đầu</p>
                     <div className="input-group">
                         <input
                             type="text"
                             value={playerName}
                             onChange={(e) => setPlayerName(e.target.value)}
-                            placeholder="Guest Name"
+                            placeholder="Tên khách mời"
                             className="premium-input"
                         />
-                        <button className="premium-button add-btn" onClick={addPlayer}>Add</button>
+                        <button className="premium-button add-btn" onClick={addPlayer}>Thêm</button>
                     </div>
                     <div className="player-list">
                         {players.map((p, i) => (
                             <span key={i} className="player-tag">{p}</span>
                         ))}
                     </div>
-                    <button className="premium-button start-btn" onClick={startGame}>Start Game</button>
+                    <button className="premium-button start-btn" onClick={startGame}>Bắt đầu trò chơi</button>
                 </div>
             ) : (
                 <div className="question-screen">
                     <div className="premium-card game-card" onClick={nextRound}>
                         <p className="question">{currentQuestion}</p>
-                        <div className="card-footer">3... 2... 1... Point!</div>
+                        <div className="card-footer">3... 2... 1... Chỉ tay!</div>
                     </div>
                 </div>
             )}
