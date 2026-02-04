@@ -1,23 +1,31 @@
+import { useState, useEffect } from 'react'
 import { db } from '../firebase'
-import { ref, update } from 'firebase/database'
+import { ref, update, onValue } from 'firebase/database'
+import { TRIVIA_DEFAULT } from '../data/defaults'
 
-const TRIVIA_DATA = [
-    { q: "Loại cocktail nào được làm từ rượu gin, nước chanh, đường và nước có ga?", a: ["Tom Collins", "Gin Fizz", "Negroni", "Martini"], correct: 0 },
-    { q: "Thành phần chính của rượu Sake Nhật Bản là gì?", a: ["Lúa mì", "Khoai tây", "Gạo", "Lúa mạch"], correct: 2 },
-    { q: "Rượu Mojito có nguồn gốc từ quốc gia nào?", a: ["Mexico", "Cuba", "Brazil", "Tây Ban Nha"], correct: 1 },
-    { q: "Loại rượu nào được mệnh danh là 'Nàng Tiên Xanh'?", a: ["Chartreuse", "Midori", "Absinthe", "Jägermeister"], correct: 2 },
-    { q: "Thể tích tiêu chuẩn của một chai rượu vang (ml) là bao nhiêu?", a: ["500ml", "700ml", "750ml", "1000ml"], correct: 2 },
-]
-
-export default function DrunkTrivia({ onBack, isAdmin, roomId, roomState }) {
+export default function DrunkTrivia({ onBack, isAdmin, isModerator, roomId, roomState }) {
+    const [triviaData, setTriviaData] = useState(TRIVIA_DEFAULT)
     const qIndex = roomState?.triviaIndex || 0
-    const currentQ = TRIVIA_DATA[qIndex]
     const feedback = roomState?.triviaFeedback || null
 
+    useEffect(() => {
+        const contentRef = ref(db, 'content/trivia')
+        const unsubscribe = onValue(contentRef, (snapshot) => {
+            const data = snapshot.val()
+            if (data) {
+                setTriviaData(Array.isArray(data) ? data : Object.values(data))
+            } else {
+                setTriviaData(TRIVIA_DEFAULT)
+            }
+        })
+        return () => unsubscribe()
+    }, [])
+
+    const currentQ = triviaData[qIndex % triviaData.length]
+
     const nextQuestion = () => {
-        if (!isAdmin) return
-        // eslint-disable-next-line react-hooks/purity
-        const randomIndex = Math.floor(Math.random() * TRIVIA_DATA.length)
+        if (!isAdmin && !isModerator) return
+        const randomIndex = Math.floor(Math.random() * triviaData.length)
         update(ref(db, `rooms/${roomId}`), {
             triviaIndex: randomIndex,
             triviaFeedback: null
@@ -25,8 +33,8 @@ export default function DrunkTrivia({ onBack, isAdmin, roomId, roomState }) {
     }
 
     const handleAnswer = (index) => {
-        if (!isAdmin || feedback) return
-        const isCorrect = index === currentQ.correct
+        if ((!isAdmin && !isModerator) || feedback) return
+        const isCorrect = index === parseInt(currentQ.correct)
         const newFeedback = isCorrect ? 'Chính xác!' : 'Sai rồi! Uống đi.'
 
         update(ref(db, `rooms/${roomId}`), { triviaFeedback: newFeedback })
@@ -34,6 +42,11 @@ export default function DrunkTrivia({ onBack, isAdmin, roomId, roomState }) {
         setTimeout(() => {
             nextQuestion()
         }, 2000)
+    }
+
+    const getOptions = () => {
+        if (currentQ.a) return currentQ.a // Old format
+        return [currentQ.a1, currentQ.a2, currentQ.a3, currentQ.a4].filter(Boolean)
     }
 
     return (
@@ -46,12 +59,12 @@ export default function DrunkTrivia({ onBack, isAdmin, roomId, roomState }) {
                     <div className="premium-card trivia-card">
                         <p className="question-text">{currentQ.q}</p>
                         <div className="options-grid">
-                            {currentQ.a.map((opt, i) => (
+                            {getOptions().map((opt, i) => (
                                 <button
                                     key={i}
-                                    className={`option-btn ${feedback ? (i === currentQ.correct ? 'correct' : 'wrong') : ''}`}
+                                    className={`option-btn ${feedback ? (i === parseInt(currentQ.correct) ? 'correct' : 'wrong') : ''}`}
                                     onClick={() => handleAnswer(i)}
-                                    disabled={!isAdmin || !!feedback}
+                                    disabled={(!isAdmin && !isModerator) || !!feedback}
                                 >
                                     {opt}
                                 </button>
@@ -59,7 +72,7 @@ export default function DrunkTrivia({ onBack, isAdmin, roomId, roomState }) {
                         </div>
                     </div>
 
-                    {!isAdmin && !feedback && <p className="subtitle">Chờ Quản trị viên trả lời...</p>}
+                    {!isAdmin && !isModerator && !feedback && <p className="subtitle">Chờ Quản trị viên trả lời...</p>}
 
                     {feedback && (
                         <div className="feedback-overlay animate-fade">

@@ -6,13 +6,13 @@ const WHEEL_OPTIONS = [
     "Thách hay Nhấp", "Cụng Ly!", "Uống Giao Lưu", "Lượt An Toàn"
 ]
 
-export default function SpinSip({ onBack, isAdmin, roomId, roomState }) {
+export default function SpinSip({ onBack, isAdmin, isModerator, roomId, roomState }) {
     const rotation = roomState?.spinRotation || 0
     const result = roomState?.spinResult || ''
     const isSpinning = roomState?.isSpinning || false
 
     const spinWheel = () => {
-        if (!isAdmin || isSpinning) return
+        if ((!isAdmin && !isModerator) || isSpinning) return
 
         const newRotation = rotation + 1800 + Math.floor(Math.random() * 360)
 
@@ -58,7 +58,7 @@ export default function SpinSip({ onBack, isAdmin, roomId, roomState }) {
             </div>
 
             <div className="wheel-controls">
-                {isAdmin && (
+                {(isAdmin || isModerator) && (
                     <button
                         className="premium-button spin-btn"
                         onClick={spinWheel}
@@ -67,7 +67,7 @@ export default function SpinSip({ onBack, isAdmin, roomId, roomState }) {
                         {isSpinning ? 'Đang quay...' : 'Quay Vòng Quay'}
                     </button>
                 )}
-                {!isAdmin && isSpinning && <p className="subtitle">Vòng quay đang quay...</p>}
+                {!isAdmin && !isModerator && isSpinning && <p className="subtitle">Vòng quay đang quay...</p>}
             </div>
 
             {result && !isSpinning && (

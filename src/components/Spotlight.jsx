@@ -1,31 +1,39 @@
+import { useState, useEffect } from 'react'
 import { db } from '../firebase'
-import { ref, update } from 'firebase/database'
+import { ref, update, onValue } from 'firebase/database'
+import { SPOTLIGHT_DEFAULT } from '../data/defaults'
 
-export default function Spotlight({ onBack, isAdmin, roomId, roomState }) {
+export default function Spotlight({ onBack, isAdmin, isModerator, roomId, roomState }) {
+    const [questions, setQuestions] = useState(SPOTLIGHT_DEFAULT)
     const isStarted = roomState?.spotlightStarted || false
     const currentQuestion = roomState?.spotlightQuestion || ''
 
-    const QUESTIONS = [
-        "Ai có khả năng sẽ bao cả bàn nhất?",
-        "Ai có khả năng sẽ là người đầu tiên nhảy nhót?",
-        "Ai có khả năng sẽ quên thanh toán hóa đơn vào cuối buổi nhất?",
-        "Ai có khả năng sẽ là người lái xe hộ (tỉnh táo nhất)?",
-        "Ai có khả năng sẽ bắt đầu màn nâng ly chúc mừng?",
-    ]
+    useEffect(() => {
+        const contentRef = ref(db, 'content/spotlight')
+        const unsubscribe = onValue(contentRef, (snapshot) => {
+            const data = snapshot.val()
+            if (data) {
+                setQuestions(Array.isArray(data) ? data : Object.values(data))
+            } else {
+                setQuestions(SPOTLIGHT_DEFAULT)
+            }
+        })
+        return () => unsubscribe()
+    }, [])
 
     const startGame = () => {
-        if (!isAdmin) return
-        const randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
+        if (!isAdmin && !isModerator) return
+        const randomQ = questions[Math.floor(Math.random() * questions.length)]
         update(ref(db, `rooms/${roomId}`), {
             spotlightStarted: true,
-            spotlightQuestion: randomQuestion
+            spotlightQuestion: randomQ.content || randomQ
         })
     }
 
     const nextRound = () => {
-        if (!isAdmin) return
-        const randomQuestion = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
-        update(ref(db, `rooms/${roomId}`), { spotlightQuestion: randomQuestion })
+        if (!isAdmin && !isModerator) return
+        const randomQ = questions[Math.floor(Math.random() * questions.length)]
+        update(ref(db, `rooms/${roomId}`), { spotlightQuestion: randomQ.content || randomQ })
     }
 
     return (
@@ -37,9 +45,9 @@ export default function Spotlight({ onBack, isAdmin, roomId, roomState }) {
                 <div className="setup-screen">
                     <div className="premium-card waiting-card">
                         <p className="subtitle">
-                            {isAdmin ? "Sẵn sàng chưa? Nhấn để bắt đầu!" : "Đang đợi Quản trị viên bắt đầu..."}
+                            {isAdmin || isModerator ? "Sẵn sàng chưa? Nhấn để bắt đầu!" : "Đang đợi Quản trị viên bắt đầu..."}
                         </p>
-                        {isAdmin && (
+                        {(isAdmin || isModerator) && (
                             <button className="premium-button start-btn" onClick={startGame}>Bắt đầu trò chơi</button>
                         )}
                     </div>
@@ -48,7 +56,7 @@ export default function Spotlight({ onBack, isAdmin, roomId, roomState }) {
                 <div className="question-screen">
                     <div className="premium-card game-card" onClick={nextRound}>
                         <p className="question">{currentQuestion}</p>
-                        <div className="card-footer">3... 2... 1... Chỉ tay! {isAdmin && "(Chạm để đổi)"}</div>
+                        <div className="card-footer">3... 2... 1... Chỉ tay! {(isAdmin || isModerator) && "(Chạm để đổi)"}</div>
                     </div>
                 </div>
             )}

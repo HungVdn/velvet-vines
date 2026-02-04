@@ -1,23 +1,44 @@
+import { useState, useEffect } from 'react'
 import { db } from '../firebase'
-import { ref, update } from 'firebase/database'
-import { TRUTH_OR_DARE_DATA } from '../data/truthOrDare'
+import { ref, update, onValue } from 'firebase/database'
+import { TRUTH_OR_DARE_DATA as DEFAULT_TOD } from '../data/truthOrDare'
 
-export default function TruthOrDare({ onBack, isAdmin, roomId, roomState }) {
+export default function TruthOrDare({ onBack, isAdmin, isModerator, roomId, roomState }) {
+    const [cards, setCards] = useState(DEFAULT_TOD)
     const cardIndex = roomState?.todIndex || 0
     const filter = roomState?.todFilter || 'all'
-    const currentCard = TRUTH_OR_DARE_DATA[cardIndex]
+
+    useEffect(() => {
+        const contentRef = ref(db, 'content/truth-or-dare')
+        const unsubscribe = onValue(contentRef, (snapshot) => {
+            const data = snapshot.val()
+            if (data) {
+                setCards(Array.isArray(data) ? data : Object.values(data))
+            } else {
+                setCards(DEFAULT_TOD)
+            }
+        })
+        return () => unsubscribe()
+    }, [])
+
+    const currentCard = cards[cardIndex % cards.length]
 
     const getRandomCard = (type) => {
-        if (!isAdmin) return
+        if (!isAdmin && !isModerator) return
 
-        let pool = TRUTH_OR_DARE_DATA
+        let pool = cards
         if (type && type !== 'all') {
-            pool = TRUTH_OR_DARE_DATA.filter(card => card.type === type)
+            pool = cards.filter(card => card.type === type)
         }
+
+        if (pool.length === 0) pool = cards // Fallback
 
         // eslint-disable-next-line react-hooks/purity
         const randomCard = pool[Math.floor(Math.random() * pool.length)]
-        const globalIndex = TRUTH_OR_DARE_DATA.findIndex(c => c.id === randomCard.id)
+        const globalIndex = cards.findIndex(c =>
+            (c.id && c.id === randomCard.id) ||
+            (c.content && c.content === randomCard.content)
+        )
 
         update(ref(db, `rooms/${roomId}`), {
             todIndex: globalIndex,
@@ -36,7 +57,7 @@ export default function TruthOrDare({ onBack, isAdmin, roomId, roomState }) {
                         key={f}
                         className={`filter-btn ${filter === f ? 'active' : ''}`}
                         onClick={() => getRandomCard(f)}
-                        disabled={!isAdmin}
+                        disabled={!isAdmin && !isModerator}
                     >
                         {f === 'all' ? 'Ngẫu nhiên' : f === 'truth' ? 'Sự thật' : 'Thách thức'}
                     </button>
@@ -51,10 +72,10 @@ export default function TruthOrDare({ onBack, isAdmin, roomId, roomState }) {
                                 currentCard.type === 'dare' ? 'Thách thức' : 'Nhấp môi'}
                         </span>
                         <p className="card-text">{currentCard.content}</p>
-                        {isAdmin && <div className="card-footer">chạm để tiếp tục</div>}
+                        {(isAdmin || isModerator) && <div className="card-footer">chạm để tiếp tục</div>}
                     </div>
                 )}
-                {!isAdmin && <div className="card-footer">Đang đợi Quản trị viên...</div>}
+                {!isAdmin && !isModerator && <div className="card-footer">Đang đợi Quản trị viên...</div>}
             </div>
 
             <style jsx>{`
