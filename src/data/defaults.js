@@ -30,13 +30,47 @@ export const SPOTLIGHT_DEFAULT = [
     { content: "Ai có khả năng sẽ bắt đầu màn nâng ly chúc mừng?" },
 ]
 
-export const TRIVIA_DEFAULT = [
-    { q: "Loại cocktail nào được làm từ rượu gin, nước chanh, đường và nước có ga?", a1: "Tom Collins", a2: "Gin Fizz", a3: "Negroni", a4: "Martini", correct: 0 },
-    { q: "Thành phần chính của rượu Sake Nhật Bản là gì?", a1: "Lúa mì", a2: "Khoai tây", a3: "Gạo", a4: "Lúa mạch", correct: 2 },
-    { q: "Rượu Mojito có nguồn gốc từ quốc gia nào?", a1: "Mexico", a2: "Cuba", a3: "Brazil", a4: "Tây Ban Nha", correct: 1 },
-    { q: "Loại rượu nào được mệnh danh là 'Nàng Tiên Xanh'?", a1: "Chartreuse", a2: "Midori", a3: "Absinthe", a4: "Jägermeister", correct: 2 },
-    { q: "Thể tích tiêu chuẩn của một chai rượu vang (ml) là bao nhiêu?", a1: "500ml", a2: "700ml", a3: "750ml", a4: "1000ml", correct: 2 },
-]
+export const TRIVIA_DEFAULT = {
+    "Văn hóa Nhậu": {
+        1: [
+            { q: "Loại rượu nào thường được dùng để pha Mojito?", a1: "Rum", a2: "Vodka", a3: "Gin", a4: "Tequila", correct: 0 },
+            { q: "Thành phần không thể thiếu trong Gin & Tonic là?", a1: "Nước chanh", a2: "Nước Tonic", a3: "Siro dâu", a4: "Nước khoáng", correct: 1 }
+        ],
+        2: [
+            { q: "Cocktail 'Old Fashioned' sử dụng loại rượu nền nào?", a1: "Bourbon/Rye Whiskey", a2: "Scotch", a3: "Cognac", a4: "Rum", correct: 0 },
+            { q: "Quốc gia nào nổi tiếng nhất với bia Guinness?", a1: "Anh", a2: "Đức", a3: "Ireland", a4: "Bỉ", correct: 2 }
+        ],
+        3: [
+            { q: "Loại rượu nào được mệnh danh là 'Nàng Tiên Xanh'?", a1: "Absinthe", a2: "Chartreuse", a3: "Midori", a4: "Cointreau", correct: 0 },
+            { q: "IBA (International Bartenders Association) công nhận bao nhiêu loại cocktail chính thức?", a1: "77", a2: "90", a3: "65", a4: "100", correct: 0 }
+        ]
+    },
+    "Kiến thức Đời sống": {
+        1: [
+            { q: "Hành tinh nào gần Mặt trời nhất?", a1: "Sao Kim", a2: "Sao Thủy", a3: "Sao Hỏa", a4: "Trái Đất", correct: 1 },
+            { q: "Màu nào sau đây không có trong cầu vồng?", a1: "Đỏ", a2: "Tím", a3: "Hồng", a4: "Xanh lá", correct: 2 }
+        ],
+        2: [
+            { q: "Ai là tác giả của tiểu thuyết 'Sherlock Holmes'?", a1: "Agatha Christie", a2: "Arthur Conan Doyle", a3: "J.K. Rowling", a4: "Stephen King", correct: 1 },
+            { q: "Nguyên tố hóa học có ký hiệu là Au?", a1: "Bạc", a2: "Đồng", a3: "Sắt", a4: "Vàng", correct: 3 }
+        ],
+        3: [
+            { q: "Quốc gia nào có diện tích lớn nhất thế giới?", a1: "Canada", a2: "Mỹ", a3: "Nga", a4: "Trung Quốc", correct: 2 },
+            { q: "Tác phẩm 'Mona Lisa' của ai?", a1: "Picasso", a2: "Van Gogh", a3: "Leonardo da Vinci", a4: "Rembrandt", correct: 2 }
+        ]
+    },
+    "Bí mật Velvet": {
+        1: [
+            { q: "Màu chủ đạo của Velvet Vines là gì?", a1: "Đỏ đô & Vàng", a2: "Xanh & Bạc", a3: "Đen & Trắng", a4: "Tím & Vàng", correct: 0 }
+        ],
+        2: [
+            { q: "Biểu tượng của Velvet Vines là gì?", a1: "Con Rồng", a2: "Ouroboros (Rắn cắn đuôi)", a3: "Phượng Hoàng", a4: "Sử Tử", correct: 1 }
+        ],
+        3: [
+            { q: "Phong cách thiết kế của Velvet Vines hướng tới điều gì?", a1: "Cổ điển & Ma mị", a2: "Hiện đại & Tối giản", a3: "Dễ thương & Nhộn nhịp", a4: "Futuristic", correct: 0 }
+        ]
+    }
+}
 
 export const GAME_SCHEMAS = {
     'wild-cards': [
@@ -70,4 +104,10 @@ export const GAME_SCHEMAS = {
         { name: 'a4', label: 'Đáp án 4', type: 'text' },
         { name: 'correct', label: 'Đáp án đúng (0-3)', type: 'text', default: '0' }
     ]
+}
+export const GAME_RULES = {
+    'wild-cards': 'Mọi luật chơi mới đều là tối cao. Kẻ phá luật nhận án phạt nhỉnh hơn (Nhấp thêm 1 hơi).',
+    'truth-or-dare': 'Sự thật là tuyệt đối. Thách thức là danh dự. Bỏ lượt quá 3 lần, định mệnh sẽ trừng phạt.',
+    'spotlight': 'Lời buộc tội phải có căn cứ. Người bị chỉ định phải chấp hành hình phạt ngay lập tức.',
+    'trivia': 'Kiến thức là sức mạnh, chất cồn là thuốc thử. Trả lời sai, sầu não nhấp môi.'
 }

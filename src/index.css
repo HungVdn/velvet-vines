@@ -1,18 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&family=EB+Garamond:wght@400;500;600;700;800&display=swap');
+
+html {
+  scroll-behavior: smooth;
+  height: -webkit-fill-available;
+}
 
 :root {
-  --bg-dark: #1A1A1A;
-  --bg-card: rgba(51, 51, 51, 0.8);
-  --gold: #D4AF37;
-  --gold-light: #F9E29C;
-  --gold-dark: #C5A02E;
-  --text-main: #F5F5F5;
-  --text-muted: #A0A0A0;
-  --glass: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(212, 175, 55, 0.2);
-  
-  --font-heading: 'Playfair Display', serif;
-  --font-body: 'Montserrat', sans-serif;
+  --bg-dark: #050208;
+  --bg-surface: #11081A;
+  --bg-card: rgba(15, 8, 25, 0.85);
+  --gold: #BF953F;
+  --gold-light: #FCF6BA;
+  --gold-dark: #8C7335;
+  --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C);
+  --accent-purple: #4B0082;
+  --text-main: #F4EBD0;
+  --text-muted: #A69B8D;
+  --glass: rgba(15, 8, 25, 0.7);
+  --glass-border: rgba(191, 149, 63, 0.3);
+
+  --font-heading: 'EB Garamond', serif;
+  --font-body: 'Crimson Text', serif;
+  --font-magic: 'EB Garamond', serif;
 }
 
 * {
@@ -26,63 +35,184 @@ body {
   color: var(--text-main);
   font-family: var(--font-body);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
-  background: radial-gradient(circle at top right, #2c2c2c, #1a1a1a);
+  width: 100%;
+  display: block;
+  /* Reset flex for natural flow */
+  background:
+    radial-gradient(circle at 50% 0%, rgba(75, 0, 130, 0.15), transparent),
+    radial-gradient(circle at center, #11081A, #050208);
+  position: relative;
 }
 
-h1, h2, h3 {
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: url("https://www.transparenttextures.com/patterns/stardust.png");
+  opacity: 0.05;
+  z-index: 100;
+}
+
+h1,
+h2,
+h3 {
   font-family: var(--font-heading);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
 }
 
 .premium-card {
   background: var(--bg-card);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 4px;
+  /* Sharper corners for ancient feel */
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.premium-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--gold-light);
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(175, 144, 67, 0.2);
+}
+
+.premium-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
 }
 
 .premium-button {
-  background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-  color: #1a1a1a;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-family: var(--font-body);
-  font-weight: 600;
+  background: var(--bg-surface);
+  color: var(--gold);
+  border: 1px solid var(--gold-dark);
+  padding: 10px 24px;
+  border-radius: 2px;
+  font-family: var(--font-heading);
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .premium-button:hover {
+  background: var(--gold-dark);
+  color: #0C0514;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  box-shadow: 0 8px 25px rgba(175, 144, 67, 0.3);
 }
 
 .premium-button:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
 }
 
 .gold-text {
-  background: linear-gradient(to right, var(--gold-light), var(--gold-dark));
+  background: linear-gradient(135deg,
+      var(--gold-dark) 0%,
+      var(--gold-light) 25%,
+      var(--gold) 50%,
+      var(--gold-light) 75%,
+      var(--gold-dark) 100%);
+  background-size: 200% auto;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  animation: goldShimmer 8s linear infinite;
 }
 
-/* Animations */
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.parchment-texture {
+  background-image: url("https://www.transparenttextures.com/patterns/old-paper.png");
+  background-color: var(--text-main);
+  color: #2a1b0a;
+}
+
+/* Optimized Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade {
-  animation: fadeIn 0.6s ease forwards;
+  animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold-dark);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+/* Skill: scroll-experience - Grimoire Page Flip */
+.grimoire-page-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 2000px;
+}
+
+.animate-page-flip {
+  animation: pageFlip 0.8s cubic-bezier(0.645, 0.045, 0.355, 1.000) forwards;
+  transform-origin: left center;
+}
+
+@keyframes pageFlip {
+  0% {
+    transform: rotateY(90deg) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+  }
 }

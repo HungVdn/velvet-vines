@@ -63,22 +63,22 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
                             <div key={field.name} className="input-field">
                                 <label>{field.label}</label>
                                 {field.type === 'select' ? (
-                                    <select 
-                                        value={newItem[field.name]} 
-                                        onChange={e => setNewItem({...newItem, [field.name]: e.target.value})}
+                                    <select
+                                        value={newItem[field.name]}
+                                        onChange={e => setNewItem({ ...newItem, [field.name]: e.target.value })}
                                     >
                                         {field.options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                                     </select>
                                 ) : field.type === 'textarea' ? (
-                                    <textarea 
-                                        value={newItem[field.name]} 
-                                        onChange={e => setNewItem({...newItem, [field.name]: e.target.value})}
+                                    <textarea
+                                        value={newItem[field.name]}
+                                        onChange={e => setNewItem({ ...newItem, [field.name]: e.target.value })}
                                     />
                                 ) : (
-                                    <input 
-                                        type="text" 
-                                        value={newItem[field.name]} 
-                                        onChange={e => setNewItem({...newItem, [field.name]: e.target.value})}
+                                    <input
+                                        type="text"
+                                        value={newItem[field.name]}
+                                        onChange={e => setNewItem({ ...newItem, [field.name]: e.target.value })}
                                     />
                                 )}
                             </div>
@@ -100,22 +100,22 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
                                         {schema.map(field => (
                                             <div key={field.name} className="input-field">
                                                 {field.type === 'select' ? (
-                                                    <select 
-                                                        value={editValue[field.name]} 
-                                                        onChange={e => setEditValue({...editValue, [field.name]: e.target.value})}
+                                                    <select
+                                                        value={editValue[field.name]}
+                                                        onChange={e => setEditValue({ ...editValue, [field.name]: e.target.value })}
                                                     >
                                                         {field.options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                                                     </select>
                                                 ) : field.type === 'textarea' ? (
-                                                    <textarea 
-                                                        value={editValue[field.name]} 
-                                                        onChange={e => setEditValue({...editValue, [field.name]: e.target.value})}
+                                                    <textarea
+                                                        value={editValue[field.name]}
+                                                        onChange={e => setEditValue({ ...editValue, [field.name]: e.target.value })}
                                                     />
                                                 ) : (
-                                                    <input 
-                                                        type="text" 
-                                                        value={editValue[field.name]} 
-                                                        onChange={e => setEditValue({...editValue, [field.name]: e.target.value})}
+                                                    <input
+                                                        type="text"
+                                                        value={editValue[field.name]}
+                                                        onChange={e => setEditValue({ ...editValue, [field.name]: e.target.value })}
                                                     />
                                                 )}
                                             </div>
