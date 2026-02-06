@@ -8,14 +8,48 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
     const [editingIndex, setEditingIndex] = useState(null)
     const [editValue, setEditValue] = useState({})
 
+    const flattenTrivia = (data) => {
+        if (!data) return []
+        const flat = []
+        Object.keys(data).forEach(cat => {
+            Object.keys(data[cat]).forEach(lvl => {
+                if (Array.isArray(data[cat][lvl])) {
+                    data[cat][lvl].forEach(q => {
+                        flat.push({ ...q, category: cat, level: lvl })
+                    })
+                }
+            })
+        })
+        return flat
+    }
+
+    const nestTrivia = (flatItems) => {
+        const nested = {}
+        flatItems.forEach(item => {
+            const { category, level, ...qData } = item
+            if (!nested[category]) nested[category] = {}
+            if (!nested[category][level]) nested[category][level] = []
+            nested[category][level].push(qData)
+        })
+        return nested
+    }
+
     useEffect(() => {
         const contentRef = ref(db, `content/${gameId}`)
         const unsubscribe = onValue(contentRef, (snapshot) => {
             const data = snapshot.val()
             if (data) {
-                setItems(Array.isArray(data) ? data : Object.values(data))
+                if (gameId === 'trivia') {
+                    setItems(flattenTrivia(data))
+                } else {
+                    setItems(Array.isArray(data) ? data : Object.values(data))
+                }
             } else {
-                setItems(defaultData)
+                if (gameId === 'trivia') {
+                    setItems(flattenTrivia(defaultData))
+                } else {
+                    setItems(defaultData)
+                }
             }
         })
         return () => unsubscribe()
@@ -23,13 +57,21 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
 
     const handleAddItem = () => {
         const updatedItems = [...items, newItem]
-        set(ref(db, `content/${gameId}`), updatedItems)
+        if (gameId === 'trivia') {
+            set(ref(db, `content/${gameId}`), nestTrivia(updatedItems))
+        } else {
+            set(ref(db, `content/${gameId}`), updatedItems)
+        }
         setNewItem(schema.reduce((acc, field) => ({ ...acc, [field.name]: field.default || '' }), {}))
     }
 
     const handleDeleteItem = (index) => {
         const updatedItems = items.filter((_, i) => i !== index)
-        set(ref(db, `content/${gameId}`), updatedItems)
+        if (gameId === 'trivia') {
+            set(ref(db, `content/${gameId}`), nestTrivia(updatedItems))
+        } else {
+            set(ref(db, `content/${gameId}`), updatedItems)
+        }
     }
 
     const startEditing = (index) => {
@@ -40,7 +82,11 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
     const handleSaveEdit = () => {
         const updatedItems = [...items]
         updatedItems[editingIndex] = editValue
-        set(ref(db, `content/${gameId}`), updatedItems)
+        if (gameId === 'trivia') {
+            set(ref(db, `content/${gameId}`), nestTrivia(updatedItems))
+        } else {
+            set(ref(db, `content/${gameId}`), updatedItems)
+        }
         setEditingIndex(null)
     }
 
@@ -128,7 +174,9 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
                                 ) : (
                                     <>
                                         <div className="item-content">
-                                            <span className="item-badge">{item.type || 'N/A'}</span>
+                                            <span className="item-badge">
+                                                {item.type || (item.category ? `${item.category} - Lv.${item.level}` : 'N/A')}
+                                            </span>
                                             <p>{item.text || item.content || item.q || item}</p>
                                         </div>
                                         <div className="item-actions">

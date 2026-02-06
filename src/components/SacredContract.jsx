@@ -66,7 +66,7 @@ export default function SacredContract({ gameMode, onSign, players, signatures, 
             <div className="contract-parchment animate-scale-in">
                 <div className="contract-header">
                     <img src={logoOuroboros} alt="" className="contract-ouroboros" />
-                    <h2 className="sacred-title">Bản Khế Ước</h2>
+                    <h2 className="sacred-title">Khế Ước Vĩnh Hằng</h2>
                 </div>
 
                 <div className="contract-body">
@@ -77,7 +77,7 @@ export default function SacredContract({ gameMode, onSign, players, signatures, 
 
                     {!hasSigned ? (
                         <div className="universal-ritual">
-                            "Bằng việc ký tên, bạn chấp nhận mọi hình phạt từ bóng tối."
+                            "Thanh tẩy tâm trí, chấp nhận sự thật. Kẻ phá vỡ khế ước sẽ tan biến vào bóng tối."
                         </div>
                     ) : (
                         <div className="waiting-list-container">
@@ -109,7 +109,7 @@ export default function SacredContract({ gameMode, onSign, players, signatures, 
                 <div className="contract-footer">
                     {!hasSigned && (
                         <button className="sign-blood-btn" onClick={onSign}>
-                            Ký tên bằng Máu 🩸
+                            Thực Thi Ấn Chú 🩸
                         </button>
                     )}
                 </div>

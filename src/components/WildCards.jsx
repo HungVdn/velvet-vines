@@ -74,11 +74,11 @@ export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId
     return (
       <div className="game-stage-content animate-fade">
         <div className="premium-card completion-card">
-          <h2 className="gold-text">Chúc mừng cả nhà! 🥂</h2>
-          <p style={{ margin: '1rem 0', fontSize: '0.9rem' }}>Tất cả các lá bài đã được lật mở.</p>
-          <p className="cheers-text">Cùng DÔ 100% nào! 🍻</p>
+          <h2 className="gold-text">Nghi Thức Viên Mãn! 🥂</h2>
+          <p style={{ margin: '1rem 0', fontSize: '0.9rem' }}>Mọi vận mệnh đã được phơi bày dưới ánh trăng.</p>
+          <p className="cheers-text">Cùng nâng ly vì đại cục! 🥂</p>
           {(isAdmin || isModerator) && (
-            <button className="finish-btn" onClick={onBack}>Kết thúc game</button>
+            <button className="finish-btn" onClick={onBack}>Hoàn tất nghi lễ</button>
           )}
         </div>
         <style jsx>{`
@@ -94,13 +94,13 @@ export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId
   return (
     <div className="game-stage-content animate-fade">
       <div className={`turn-banner ${isMyTurn ? 'my-turn' : ''}`}>
-        {isMyTurn ? "Lượt của bạn! 👊" : `Lượt của: ${activePlayer?.nickname}`}
+        {isMyTurn ? "Linh hồn bạn đã sẵn sàng! 🕯️" : `Linh hồn thủ dẫn: ${activePlayer?.nickname}`}
       </div>
       <div className="card-display">
         {!isRevealed ? (
           <div className={`premium-card card-back ${isMyTurn ? 'my-turn-card' : ''}`} onClick={drawCard}>
             <img src={logoOuroboros} className="card-logo-img" alt="Ouroboros" />
-            <p className="tap-hint">{isMyTurn ? "Chạm để bốc bài" : `Chờ ${activePlayer?.nickname}...`}</p>
+            <p className="tap-hint">{isMyTurn ? "Chạm để lật mở vận mệnh" : `Chờ ${activePlayer?.nickname} khai mở...`}</p>
           </div>
         ) : (
           <div className={`premium-card game-card ${isMyTurn ? 'my-turn-card' : ''}`}>
@@ -110,7 +110,7 @@ export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId
             </p>
             <div className="action-stack">
               {isAdmin || isModerator ? (
-                <button className="finish-btn" onClick={handleAdvance}>Xong - Qua lượt</button>
+                <button className="finish-btn" onClick={handleAdvance}>Giao Kết - Tiến Bước</button>
               ) : null}
             </div>
           </div>

@@ -6,18 +6,23 @@ html {
 }
 
 :root {
-  --bg-dark: #050208;
-  --bg-surface: #11081A;
-  --bg-card: rgba(15, 8, 25, 0.85);
+  --bg-dark: #0C0514;
+  /* Void Purple */
+  --bg-surface: #1A0D2A;
+  --bg-card: rgba(20, 10, 30, 0.7);
   --gold: #BF953F;
-  --gold-light: #FCF6BA;
+  /* Sacred Gold */
+  --gold-light: #F4EBD0;
+  /* Parchment/Light Gold */
   --gold-dark: #8C7335;
-  --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C);
+  --ritual-crimson: #FF2D55;
+  --gold-gradient: linear-gradient(135deg, #BF953F, #F4EBD0 25%, #B38728 50%, #F4EBD0 75%, #AA771C);
   --accent-purple: #4B0082;
   --text-main: #F4EBD0;
-  --text-muted: #A69B8D;
-  --glass: rgba(15, 8, 25, 0.7);
-  --glass-border: rgba(191, 149, 63, 0.3);
+  /* Parchment Text */
+  --text-muted: rgba(244, 235, 208, 0.6);
+  --glass: rgba(12, 5, 20, 0.8);
+  --glass-border: rgba(191, 149, 63, 0.2);
 
   --font-heading: 'EB Garamond', serif;
   --font-body: 'Crimson Text', serif;
@@ -100,29 +105,32 @@ h3 {
 }
 
 .premium-button {
-  background: var(--bg-surface);
+  background: rgba(12, 5, 20, 0.6);
   color: var(--gold);
   border: 1px solid var(--gold-dark);
-  padding: 10px 24px;
-  border-radius: 2px;
+  padding: 12px 28px;
+  border-radius: 40px;
+  /* More elegant pill shape */
   font-family: var(--font-heading);
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
 }
 
 .premium-button:hover {
   background: var(--gold-dark);
   color: #0C0514;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(175, 144, 67, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(191, 149, 63, 0.25);
+  border-color: var(--gold-light);
 }
 
 .premium-button:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(-2px) scale(0.96);
 }
 
 .gold-text {
@@ -148,6 +156,73 @@ h3 {
 
   100% {
     background-position: 200% 0;
+  }
+}
+
+.gold-foil {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 12s linear infinite;
+  background-size: 200% auto;
+  filter: drop-shadow(0 0 1px rgba(191, 149, 63, 0.3));
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.float-magic {
+  animation: floatMagic 6s ease-in-out infinite;
+}
+
+@keyframes floatMagic {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-15px) rotate(1deg);
+  }
+}
+
+.ritual-ember {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  animation: flyEmber 10s linear infinite;
+}
+
+@keyframes flyEmber {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.6;
+  }
+
+  80% {
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: translateY(-100px) translateX(100px) scale(1.5);
+    opacity: 0;
   }
 }
 

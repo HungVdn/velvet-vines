@@ -6,8 +6,8 @@ export default function Lobby({ onJoin }) {
   const [passcode, setPasscode] = useState('')
 
   const handleAction = () => {
-    if (!nickname.trim()) return alert('Vui lòng nhập biệt danh!')
-    if (!passcode.trim()) return alert('Vui lòng nhập Mã truy cập!')
+    if (!nickname.trim()) return alert('Nghi lễ yêu cầu một Thánh Danh để bắt đầu!')
+    if (!passcode.trim()) return alert('Lời Chân Ngôn không chính xác, bí mật vẫn sẽ bị khóa!')
 
     onJoin({ nickname, passcode })
   }
@@ -18,18 +18,28 @@ export default function Lobby({ onJoin }) {
         <img src={logoOuroboros} alt="" />
       </div>
 
+      <div className="ritual-embers-bg">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className="ritual-ember" style={{
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 10}s`,
+            animationDuration: `${8 + Math.random() * 10}s`
+          }}></div>
+        ))}
+      </div>
+
       <header className="hero">
-        <h1 className="gold-foil main-title">Thánh Địa Velvet</h1>
-        <p className="subtitle">Nơi Những Bí Mật Được Phơi Bày</p>
+        <h1 className="gold-foil main-title">Mật Viện Velvet</h1>
+        <p className="subtitle">Nơi Nghi Lễ Bắt Đầu & Sự Thật Được Khai Mở</p>
         <div className="shimmer-divider"></div>
       </header>
 
-      <div className="setup-card premium-card">
+      <div className="setup-card premium-card glass-morphism float-magic">
         <div className="input-group-vertical">
-          <label>Danh xưng</label>
+          <label>Thánh Danh</label>
           <input
             type="text"
-            placeholder="VD: Quý Cô Nhung..."
+            placeholder="VD: Quý Ngài Bóng Đêm..."
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             className="premium-input"
@@ -37,10 +47,10 @@ export default function Lobby({ onJoin }) {
         </div>
 
         <div className="input-group-vertical">
-          <label>Mật khẩu Cổ xưa</label>
+          <label>Lời Chân Ngôn</label>
           <input
             type="password"
-            placeholder="Lời thì thầm..."
+            placeholder="Thì thầm lời mật mã..."
             value={passcode}
             onChange={(e) => setPasscode(e.target.value)}
             className="premium-input"
@@ -48,7 +58,7 @@ export default function Lobby({ onJoin }) {
         </div>
 
         <button className="premium-button join-btn" onClick={handleAction}>
-          Bước vào Nghi thức
+          Khai Mở Nghi Lễ
         </button>
       </div>
 

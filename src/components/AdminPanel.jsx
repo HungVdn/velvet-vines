@@ -27,12 +27,12 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
         }
     }, [globalRandomTimestamp, players])
     const modes = [
-        { id: 'party-room', name: 'Sảnh Chờ (Sắp xếp chỗ)', editable: false },
+        { id: 'party-room', name: 'Mật Viện Velvet', editable: false },
         { id: 'wild-cards', name: 'Lá Bài Hoang Dã', editable: true },
-        { id: 'truth-or-dare', name: 'Sự thật hay Thách thức', editable: true },
+        { id: 'truth-or-dare', name: 'Sự Thật & Thách Thức', editable: true },
         { id: 'spotlight', name: 'Tâm Điểm', editable: true },
-        { id: 'trivia', name: 'Đố Vui Nhậu Nhẹt', editable: false },
-        { id: 'deep-secrets', name: 'Sâu Sắc & Chia Sẻ', editable: true },
+        { id: 'trivia', name: 'Tiên Tri Tửu', editable: true },
+        { id: 'deep-secrets', name: 'Khế Ước Linh Hồn', editable: true },
     ]
 
     const handleUpdatePasscode = (newPasscode) => {
@@ -40,19 +40,6 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
         update(ref(db, `rooms/${roomId}`), { joinPasscode: newPasscode })
     }
 
-    const handleRandomPick = () => {
-        if (!isAdmin && !isModerator) return
-        if (players.length === 0) return
-        const picked = players[Math.floor(Math.random() * players.length)]
-        update(ref(db, `rooms/${roomId}`), {
-            globalRandomTarget: picked.nickname,
-            globalRandomTimestamp: Date.now()
-        })
-        // Clear after 8 seconds to not clutter the UI forever
-        setTimeout(() => {
-            update(ref(db, `rooms/${roomId}`), { globalRandomTarget: null, globalRandomTimestamp: null })
-        }, 8000)
-    }
 
     const handleResetSession = () => {
         if (!isAdmin && !isModerator) return
@@ -86,7 +73,7 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
     return (
         <div className="admin-panel animate-fade">
             <div className="admin-header">
-                <h2 className="gold-text header-small">{isAdmin ? 'Admin' : 'Moderator'}</h2>
+                <h2 className="gold-text header-small">{isAdmin ? 'Chủ Tế' : 'Hộ Pháp'}</h2>
                 {isAdmin && (
                     <div className="passcode-config">
                         <label>Mã vào: </label>
@@ -100,7 +87,7 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                 )}
                 {(roomState?.globalRandomTarget || isRolling) && (
                     <div className={`global-random-reveal ${isRolling ? 'rolling' : 'animate-bounce'}`}>
-                        🎲 {isRolling ? 'Đang chọn...' : 'Ngẫu nhiên'}: <span className="gold-text">{isRolling ? rollingName : roomState?.globalRandomTarget}</span>
+                        🎲 {isRolling ? 'Đang triệu hồi...' : 'Định Mệnh Gọi Tên'}: <span className="gold-text">{isRolling ? rollingName : roomState?.globalRandomTarget}</span>
                     </div>
                 )}
             </div>
@@ -111,7 +98,7 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                     <div className="grimoire-corner tr"></div>
                     <div className="grimoire-corner bl"></div>
                     <div className="grimoire-corner br"></div>
-                    <h3>Chọn trò chơi</h3>
+                    <h3>Khởi Tạo Nghi Lễ</h3>
                     <div className="mode-buttons">
                         {modes.map(mode => (
                             <div key={mode.id} className="mode-btn-group">
@@ -160,7 +147,7 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                     </div>
 
                     <div className="mode-settings" style={{ marginTop: '1.5rem' }}>
-                        <h4 className="gold-text" style={{ fontSize: '0.9rem', marginBottom: '10px' }}>Luật chơi</h4>
+                        <h4 className="gold-text" style={{ fontSize: '0.9rem', marginBottom: '10px' }}>Quy Tắc Vĩnh Hằng</h4>
                         <div className="direction-toggle">
                             <button
                                 className={`toggle-btn ${!roomState?.autoMode ? 'active' : ''}`}
@@ -183,15 +170,7 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                             className="premium-button reset-btn-danger"
                             onClick={handleResetSession}
                         >
-                            Làm mới dữ liệu (Chơi lại)
-                        </button>
-
-                        <button
-                            className="premium-button"
-                            style={{ width: '100%', marginTop: '1rem', background: 'rgba(255, 40, 100, 0.2)', borderColor: '#ff2864', color: '#ff2864' }}
-                            onClick={handleRandomPick}
-                        >
-                            🎲 Chọn 1 người ngẫu nhiên
+                            Tái Khởi Toàn Bộ Nghi Lễ
                         </button>
                     </div>
                 </section>

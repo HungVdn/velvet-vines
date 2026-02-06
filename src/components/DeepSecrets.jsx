@@ -74,11 +74,11 @@ export default function DeepSecrets({ onBack, isAdmin, isModerator, userId, room
         return (
             <div className="game-stage-content animate-fade">
                 <div className="premium-card completion-card">
-                    <h2 className="gold-text">Sâu Sắc & Chia Sẻ 🥂</h2>
-                    <p style={{ margin: '1rem 0', fontSize: '0.9rem' }}>Tất cả các câu chuyện đã được kể.</p>
-                    <p className="cheers-text">Cùng nâng ly vì sự chân thành! 🍻</p>
+                    <h2 className="gold-text">Khế Ước Linh Hồn 🥂</h2>
+                    <p style={{ margin: '1rem 0', fontSize: '0.9rem' }}>Mọi bí mật đã được soi sáng bởi bóng tối.</p>
+                    <p className="cheers-text">Hào quang của sự chân thật đã soi sáng tâm hồn! 🥂</p>
                     {(isAdmin || isModerator) && (
-                        <button className="finish-btn" onClick={onBack}>Kết thúc game</button>
+                        <button className="finish-btn" onClick={onBack}>Hoàn tất nghi lễ</button>
                     )}
                 </div>
                 <style jsx>{`
@@ -94,13 +94,13 @@ export default function DeepSecrets({ onBack, isAdmin, isModerator, userId, room
     return (
         <div className="game-stage-content animate-fade">
             <div className={`turn-banner ${isMyTurn ? 'my-turn' : ''}`}>
-                {isMyTurn ? "Lượt của bạn! 👊" : `Lượt của: ${activePlayer?.nickname}`}
+                {isMyTurn ? "Đến lượt bạn thực thi khế ước! 👊" : `Linh hồn dẫn dắt: ${activePlayer?.nickname}`}
             </div>
             <div className="card-display">
                 {!isRevealed ? (
                     <div className={`premium-card card-back ${isMyTurn ? 'my-turn-card' : ''}`} onClick={drawCard}>
                         <img src={logoOuroboros} className="card-logo-img" alt="Ouroboros" />
-                        <p className="tap-hint">{isMyTurn ? "Chạm để bốc bài" : `Chờ ${activePlayer?.nickname}...`}</p>
+                        <p className="tap-hint">{isMyTurn ? "Chạm để lật mở khế ước" : `Chờ ${activePlayer?.nickname} lật mở...`}</p>
                     </div>
                 ) : (
                     <div className={`premium-card game-card ${isMyTurn ? 'my-turn-card' : ''}`}>
@@ -110,7 +110,7 @@ export default function DeepSecrets({ onBack, isAdmin, isModerator, userId, room
                         </p>
                         <div className="action-stack">
                             {isAdmin || isModerator ? (
-                                <button className="finish-btn" onClick={handleAdvance}>Xong - Qua lượt</button>
+                                <button className="finish-btn" onClick={handleAdvance}>Giao Kết - Qua lượt</button>
                             ) : null}
                         </div>
                     </div>

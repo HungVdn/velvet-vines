@@ -23,43 +23,46 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
 
     // Cinematic Ritual Trigger
     useEffect(() => {
-        const startTs = roomState?.gameStartTimestamp
-        if (startTs && startTs !== lastTriggeredTs) {
-            // Clock skew tolerant check: 20s window
-            const age = Math.abs(Date.now() - startTs)
-            if (age < 20000) {
-                setLastTriggeredTs(startTs)
-                setIsRitualActive(true)
-                let startTime = Date.now()
-                const duration = 2800 // 2.8 seconds ritual
+        const startTs = roomState?.gameStartTimestamp || 0
+        const penaltyTs = roomState?.penaltyRitualTimestamp || 0
 
-                const animate = () => {
-                    const elapsed = Date.now() - startTime
-                    const progress = elapsed / duration
+        // Find whichever is newer
+        const activeTs = Math.max(startTs, penaltyTs)
+        const isPenalty = penaltyTs > startTs
+        const targetSlot = isPenalty ? roomState?.penaltyRitualSlot : activeTurnSlot
 
-                    if (progress < 1) {
-                        const totalSpins = 5 // MUST be integer for correct modulo landing
-                        const easedProgress = progress < 0.2
-                            ? Math.pow(progress / 0.2, 2) * 0.2 // Initial ramp
-                            : 1 - Math.pow(1 - progress, 2.2) // Sharper ease out for precise landing
+        if (activeTs > 0 && activeTs !== lastTriggeredTs) {
+            setLastTriggeredTs(activeTs)
+            setIsRitualActive(true)
+            let startTime = Date.now()
+            const duration = 2800
 
-                        const currentPos = (easedProgress * totalSpins * numPlayers) + (activeTurnSlot || 0)
-                        setWispSlot(currentPos % numPlayers)
-                        requestAnimationFrame(animate)
-                    } else {
-                        setWispSlot(null)
-                        ritualTimeoutRef.current = setTimeout(() => {
-                            setIsRitualActive(false)
-                        }, 800)
-                    }
+            const animate = () => {
+                const elapsed = Date.now() - startTime
+                const progress = elapsed / duration
+
+                if (progress < 1) {
+                    const totalSpins = 5
+                    const easedProgress = progress < 0.2
+                        ? Math.pow(progress / 0.2, 2) * 0.2
+                        : 1 - Math.pow(1 - progress, 2.2)
+
+                    const currentPos = (easedProgress * totalSpins * (numPlayers || 1)) + (targetSlot || 0)
+                    setWispSlot(currentPos % (numPlayers || 1))
+                    requestAnimationFrame(animate)
+                } else {
+                    setWispSlot(null)
+                    ritualTimeoutRef.current = setTimeout(() => {
+                        setIsRitualActive(false)
+                    }, 800)
                 }
-                requestAnimationFrame(animate)
             }
+            requestAnimationFrame(animate)
         }
         return () => {
             if (ritualTimeoutRef.current) clearTimeout(ritualTimeoutRef.current)
         }
-    }, [roomState?.gameStartTimestamp, numPlayers, activeTurnSlot, lastTriggeredTs])
+    }, [roomState?.gameStartTimestamp, roomState?.penaltyRitualTimestamp, roomState?.penaltyRitualSlot, numPlayers, activeTurnSlot])
 
     // Effect for turn transition pulse
     useEffect(() => {
@@ -132,13 +135,23 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
         <div className="party-room animate-fade">
             <button className="back-button" onClick={onBack}>← Menu</button>
 
+            <div className="ritual-embers-bg">
+                {[...Array(15)].map((_, i) => (
+                    <div key={i} className="ritual-ember" style={{
+                        left: `${Math.random() * 100}%`,
+                        animationDelay: `${Math.random() * 12}s`,
+                        animationDuration: `${10 + Math.random() * 10}s`
+                    }}></div>
+                ))}
+            </div>
+
             <header className="room-header">
-                <h1 className="header-title gold-foil">Ouroboros Velvet</h1>
+                <h1 className="header-title gold-foil">Mật Viện Velvet</h1>
             </header>
 
             {roomState?.activeTurnSlot !== undefined && (
                 <div className="turn-indicator-pill gold-foil">
-                    Lượt của: {players[roomState.activeTurnSlot]?.nickname || '...'}
+                    Linh hồn dẫn dắt: {players[roomState.activeTurnSlot]?.nickname || '...'}
                 </div>
             )}
 
@@ -152,17 +165,6 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                             {activeGame && (
                                 <div className={`game-stage ${isRitualActive ? 'ritual-hidden' : 'animate-scale-in'}`}>
                                     {activeGame}
-                                </div>
-                            )}
-                            {isRitualActive && wispSlot !== null && (
-                                <div
-                                    className="magic-wisp"
-                                    style={{
-                                        transform: `rotate(${wispSlot * angleStep}deg) translateY(-280px)`,
-                                    }}
-                                >
-                                    <div className="wisp-core"></div>
-                                    <div className="wisp-trail"></div>
                                 </div>
                             )}
                         </div>
@@ -225,6 +227,23 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                         )
                     })}
                 </div>
+
+                {isRitualActive && wispSlot !== null && (
+                    <div
+                        className="magic-wisp"
+                        style={{
+                            left: '50%',
+                            top: '50%',
+                            marginLeft: '-17.5px',
+                            marginTop: '-17.5px',
+                            transform: `rotate(${wispSlot * angleStep}deg) translateY(-280px)`,
+                            zIndex: 9999
+                        }}
+                    >
+                        <div className="wisp-core"></div>
+                        <div className="wisp-trail"></div>
+                    </div>
+                )}
             </div>
 
             <style jsx>{`
@@ -562,11 +581,11 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                 
                 .magic-wisp {
                     position: absolute;
-                    width: 30px;
-                    height: 30px;
+                    width: 35px;
+                    height: 35px;
                     z-index: 1000;
                     pointer-events: none;
-                    filter: drop-shadow(0 0 20px var(--gold));
+                    filter: drop-shadow(0 0 30px var(--gold)) drop-shadow(0 0 10px #fff);
                 }
                 
                 .wisp-core {
@@ -603,6 +622,6 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                     .global-turn-indicator .value { font-size: 1rem; }
                 }
             `}</style>
-        </div>
+        </div >
     )
 }

@@ -93,17 +93,17 @@ export default function Spotlight({ onBack, isAdmin, isModerator, roomId, roomSt
             <button className="back-button" onClick={onBack}>← Sảnh chờ</button>
             <h2 className="gold-text">Tâm Điểm</h2>
             <div className={`turn-banner ${isMyTurn ? 'my-turn' : ''}`}>
-                {isMyTurn ? "Tâm điểm là bạn! 🌟" : `Tâm điểm: ${activePlayer?.nickname}`}
+                {isMyTurn ? "Hào quang đang hướng về bạn! 🌟" : `Hào quang hội tụ: ${activePlayer?.nickname}`}
             </div>
 
             {!isStarted ? (
                 <div className="setup-screen">
                     <div className="premium-card waiting-card">
                         <p className="subtitle">
-                            {isAdmin || isModerator ? "Sẵn sàng chưa? Nhấn để bắt đầu!" : "Đang đợi Quản trị viên bắt đầu..."}
+                            {isAdmin || isModerator ? "Sẵn sàng đón nhận hào quang? Nhấn để bắt đầu!" : "Đang chờ Chủ Tế khai mở Tâm Điểm..."}
                         </p>
                         {(isAdmin || isModerator) && (
-                            <button className="premium-button start-btn" onClick={startGame}>Bắt đầu trò chơi</button>
+                            <button className="premium-button start-btn" onClick={startGame}>Khai Mở Tâm Điểm</button>
                         )}
                     </div>
                 </div>
@@ -112,7 +112,7 @@ export default function Spotlight({ onBack, isAdmin, isModerator, roomId, roomSt
                     {!isRevealed ? (
                         <div className={`premium-card card-back ${isAdmin || isModerator ? 'admin-can-reveal' : ''}`} onClick={revealQuestion}>
                             <img src={logoOuroboros} className="card-logo-img" alt="Ouroboros" />
-                            <p className="tap-hint">{isAdmin || isModerator ? "Chạm để lật bài" : "Đang chờ chủ xị..."}</p>
+                            <p className="tap-hint">{isAdmin || isModerator ? "Chạm để lật mở phán quyết" : "Đang chờ Chủ Tế..."}</p>
                         </div>
                     ) : (
                         <div className="premium-card game-card">
@@ -123,24 +123,24 @@ export default function Spotlight({ onBack, isAdmin, isModerator, roomId, roomSt
                                 {localCountdown === null ? (
                                     (isAdmin || isModerator) && (
                                         <button className="start-timer-btn" onClick={startCountdown}>
-                                            Bắt đầu Đếm ngược ⏱
+                                            Bắt đầu Nghi Thức Chỉ Tay ⏱
                                         </button>
                                     )
                                 ) : localCountdown > 0 ? (
                                     <div className="timer-display active">
                                         <span className="timer-num">{localCountdown}</span>
-                                        <span className="timer-label">Chỉ tay sau...</span>
+                                        <span className="timer-label">Phán xét sau...</span>
                                     </div>
                                 ) : (
                                     <div className="timer-display finished animate-bounce">
-                                        <span className="timer-done">CHỈ TAY! ☝️</span>
+                                        <span className="timer-done">THỰC THI PHÁN XÉT! ☝️</span>
                                     </div>
                                 )}
                             </div>
 
                             <div className="action-stack">
                                 {(isAdmin || isModerator) && (
-                                    <button className="finish-btn" onClick={nextRound}>Xong - Qua lượt</button>
+                                    <button className="finish-btn" onClick={nextRound}>Giao Kết - Qua lượt</button>
                                 )}
                             </div>
                         </div>

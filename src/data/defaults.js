@@ -106,12 +106,20 @@ export const GAME_SCHEMAS = {
         { name: 'content', label: 'Câu hỏi', type: 'textarea' }
     ],
     'trivia': [
+        { name: 'category', label: 'Danh mục', type: 'text', default: 'Văn hóa Nhậu' },
+        {
+            name: 'level', label: 'Cấp độ (1-3)', type: 'select', options: [
+                { label: 'Cấp 1 (Nhẹ)', value: '1' },
+                { label: 'Cấp 2 (Vừa)', value: '2' },
+                { label: 'Cấp 3 (Gắt)', value: '3' }
+            ], default: '1'
+        },
         { name: 'q', label: 'Câu hỏi', type: 'textarea' },
         { name: 'a1', label: 'Đáp án 1', type: 'text' },
         { name: 'a2', label: 'Đáp án 2', type: 'text' },
         { name: 'a3', label: 'Đáp án 3', type: 'text' },
         { name: 'a4', label: 'Đáp án 4', type: 'text' },
-        { name: 'correct', label: 'Đáp án đúng (0-3)', type: 'text', default: '0' }
+        { name: 'correct', label: 'Đáp án đúng (1 lá 1, 2 lá 2...) - NHẬP SỐ 0-3 (0=A, 1=B...)', type: 'text', default: '0' }
     ],
     'deep-secrets': [
         {

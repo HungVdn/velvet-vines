@@ -231,10 +231,9 @@ function App() {
     todRevealed: false,
     spotlightRevealed: false,
     deepSecretsRevealed: false,
-    spotlightCountdownStartTime: null,
-    spinResult: '',
-    isSpinning: false,
-    triviaFeedback: null,
+    penaltyRitualTimestamp: null,
+    penaltyRitualSlot: null,
+    globalRandomTarget: null,
     contractAccepted: false
   }
 
