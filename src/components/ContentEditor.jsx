@@ -96,6 +96,43 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
         }
     }
 
+    const handleExport = () => {
+        const dataStr = JSON.stringify(items, null, 2)
+        const blob = new Blob([dataStr], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `velvet-vines-${gameId}-${Date.now()}.json`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
+    const handleImport = (event) => {
+        const file = event.target.files[0]
+        if (!file) return
+
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            try {
+                const importedItems = JSON.parse(e.target.result)
+                if (window.confirm(`Bạn có chắc muốn nhập ${importedItems.length} mục từ file này? Dữ liệu hiện tại sẽ bị thay thế.`)) {
+                    if (gameId === 'trivia') {
+                        // Ensure we nest it back if it's flat (which it should be from export)
+                        set(ref(db, `content/${gameId}`), nestTrivia(importedItems))
+                    } else {
+                        set(ref(db, `content/${gameId}`), importedItems)
+                    }
+                    // Local state will update via the onValue listener
+                }
+            } catch (err) {
+                alert('Lỗi đọc file JSON: ' + err.message)
+            }
+        }
+        reader.readAsText(file)
+        event.target.value = null // Reset input
+    }
+
     return (
         <div className="content-editor animate-fade">
             <button className="back-button" onClick={onBack}>← Quay lại</button>
@@ -136,7 +173,14 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
                 <section className="items-list-section premium-card">
                     <div className="section-header">
                         <h3>Danh sách hiện tại ({items.length})</h3>
-                        <button className="restore-btn" onClick={handleRestoreDefaults}>Khôi phục mặc định</button>
+                        <div className="header-actions" style={{ display: 'flex', gap: '10px' }}>
+                            <button className="icon-btn export-btn" onClick={handleExport} title="Xuất JSON">⬇️ Xuất</button>
+                            <label className="icon-btn import-btn" title="Nhập JSON" style={{ cursor: 'pointer' }}>
+                                ⬆️ Nhập
+                                <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+                            </label>
+                            <button className="restore-btn" onClick={handleRestoreDefaults}>Khôi phục mặc định</button>
+                        </div>
                     </div>
                     <div className="items-list">
                         {items.map((item, index) => (
@@ -208,8 +252,14 @@ export default function ContentEditor({ gameId, gameName, onBack, defaultData, s
                 .input-field textarea { height: 80px; resize: vertical; }
                 .add-btn { width: 100%; }
                 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+                .icon-btn { padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; border: 1px solid transparent; color: white; display: flex; align-items: center; gap: 4px; }
+                .export-btn { background: rgba(0, 122, 255, 0.3); border-color: rgba(0, 122, 255, 0.5); }
+                .export-btn:hover { background: rgba(0, 122, 255, 0.6); }
+                .import-btn { background: rgba(255, 149, 0, 0.3); border-color: rgba(255, 149, 0, 0.5); }
+                .import-btn:hover { background: rgba(255, 149, 0, 0.6); }
                 .restore-btn { background: transparent; border: 1px solid #666; color: #aaa; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
                 .restore-btn:hover { border-color: var(--gold); color: var(--gold); }
+                .header-actions { display: flex; align-items: center; gap: 8px; }
                 .items-list { display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; padding-right: 10px; }
                 .items-list::-webkit-scrollbar { width: 4px; }
                 .items-list::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 2px; }

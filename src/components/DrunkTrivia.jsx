@@ -115,7 +115,7 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
         update(ref(db, `rooms/${roomId}`), {
             triviaPhase: 'thinking',
             triviaTimerStart: Date.now(),
-            triviaTimerDuration: 30 // 30 seconds to think
+            triviaTimerDuration: 10 // 10 seconds to think
         })
     }
 

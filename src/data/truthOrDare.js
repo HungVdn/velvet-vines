@@ -922,5 +922,322 @@ export const TRUTH_OR_DARE_DATA = [
         "content": "Ai chưa từng nhuộm tóc uống 1 ly.",
         "category": "fact",
         "intensity": 1
+    },
+    // Corporate/Company Edition (Age 22-30)
+    {
+        "id": 200,
+        "type": "truth",
+        "content": "Bạn đã bao giờ lén ngủ trong phòng họp hoặc nhà vệ sinh công ty chưa?",
+        "category": "secret",
+        "intensity": 2
+    },
+    {
+        "id": 201,
+        "type": "truth",
+        "content": "Ai là đồng nghiệp bạn thấy 'đáng ghét' nhất (nhưng vẫn phải mỉm cười chào hỏi)?",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 202,
+        "type": "truth",
+        "content": "Bạn đã bao giờ 'fake' task (giả vờ bận) để trốn thêm việc chưa?",
+        "category": "secret",
+        "intensity": 2
+    },
+    {
+        "id": 203,
+        "type": "truth",
+        "content": "Bạn đã bao giờ 'crush' hoặc thích thầm một ai đó trong công ty chưa? Họ có ở đây không?",
+        "category": "love",
+        "intensity": 3
+    },
+    {
+        "id": 204,
+        "type": "truth",
+        "content": "Điều điên rồ nhất bạn từng làm để trốn họp hoặc xin nghỉ phép là gì?",
+        "category": "experience",
+        "intensity": 2
+    },
+    {
+        "id": 205,
+        "type": "truth",
+        "content": "Bạn có hay nói xấu sếp hoặc công ty trong các nhóm chat bí mật không?",
+        "category": "secret",
+        "intensity": 3
+    },
+    {
+        "id": 206,
+        "type": "truth",
+        "content": "Nếu được sa thải một người trong công ty (không phải người ở đây), bạn chọn ai?",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 207,
+        "type": "dare",
+        "content": "Mở Slack/Teams/Zalo và gửi icon '❤️' cho sếp trực tiếp của bạn (sau 30s mới được giải thích là gửi nhầm).",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 208,
+        "type": "dare",
+        "content": "Diễn tả lại bộ dạng của sếp (hoặc một đồng nghiệp nổi tiếng) lúc đang cáu gắt mà không dùng lời nói.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 209,
+        "type": "dare",
+        "content": "Hát một bài hát thiếu nhi (Vịt con, Bà ơi bà...) với tông giọng cực kỳ nghiêm túc như đang thuyết trình dự án lớn.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 210,
+        "type": "dare",
+        "content": "Thực hiện một bài 'quảng cáo' cho sản phẩm của công ty mình bằng phong cách kiếm hiệp/phim hành động.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 211,
+        "type": "dare",
+        "content": "Đứng lên và nhảy một điệu nhảy hot trend TikTok trong 30 giây (Mọi người cùng quay phim).",
+        "category": "social",
+        "intensity": 2
+    },
+    {
+        "id": 212,
+        "type": "truth",
+        "content": "Món đồ đắt nhất bạn từng mua sau khi nhận thưởng/lương là gì? Bạn có hối hận không?",
+        "category": "personal",
+        "intensity": 1
+    },
+    {
+        "id": 213,
+        "type": "truth",
+        "content": "Bạn thấy mức lương hiện tại của mình có xứng đáng với công sức bỏ ra không?",
+        "category": "deep",
+        "intensity": 3
+    },
+    {
+        "id": 214,
+        "type": "dare",
+        "content": "Gọi điện cho một đồng nghiệp KHÔNG có mặt ở đây và hỏi 'Ủa mai có đi làm không?' rồi cúp máy ngang.",
+        "category": "social",
+        "intensity": 3
+    },
+    // Entertainment & Pop Culture Edition (2022-2024)
+    {
+        "id": 300,
+        "type": "truth",
+        "content": "Bạn đã từng giả vờ là fan của một nghệ sĩ nào đó chỉ để có chuyện nói với 'crush' chưa?",
+        "category": "secret",
+        "intensity": 2
+    },
+    {
+        "id": 301,
+        "type": "truth",
+        "content": "Bạn thấy nghệ sĩ nào trong showbiz Việt là 'overrated' (đánh giá quá cao) nhất?",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 302,
+        "type": "truth",
+        "content": "Bạn đã từng lén xem phim 18+ của một diễn viên nổi tiếng nào đó chưa?",
+        "category": "hot",
+        "intensity": 3
+    },
+    {
+        "id": 303,
+        "type": "truth",
+        "content": "Nếu được mời đóng cảnh nóng với một nghệ sĩ, bạn chọn ai?",
+        "category": "hot",
+        "intensity": 3
+    },
+    {
+        "id": 304,
+        "type": "truth",
+        "content": "Bạn đã từng stalk tài khoản của người yêu cũ của một idol nào đó chưa?",
+        "category": "love",
+        "intensity": 2
+    },
+    {
+        "id": 305,
+        "type": "truth",
+        "content": "Sở thích âm nhạc nào của bạn mà nếu bạn bè biết, họ chắc chắn sẽ cười nhạo?",
+        "category": "personal",
+        "intensity": 2
+    },
+    {
+        "id": 306,
+        "type": "truth",
+        "content": "Bạn đã bao giờ chi tiền triệu để mua một món đồ mà idol quảng cáo nhưng sau đó thấy nó rất dở chưa?",
+        "category": "experience",
+        "intensity": 2
+    },
+    {
+        "id": 307,
+        "type": "truth",
+        "content": "Bạn thấy ai trong nhóm này có phong cách ăn mặc giống nghệ sĩ nhất?",
+        "category": "social",
+        "intensity": 1
+    },
+    {
+        "id": 308,
+        "type": "truth",
+        "content": "Bạn có bao giờ mơ thấy mình đang làm đám cưới với một 'Anh Trai' nào trong show Anh Trai Say Hi chưa?",
+        "category": "love",
+        "intensity": 2
+    },
+    {
+        "id": 309,
+        "type": "truth",
+        "content": "Bộ phim nào bạn đã xem đi xem lại hơn 5 lần mà không chán?",
+        "category": "experience",
+        "intensity": 1
+    },
+    {
+        "id": 310,
+        "type": "truth",
+        "content": "Bạn đã từng lén ghi âm hoặc quay lén một buổi concert (dù bị cấm) chưa?",
+        "category": "secret",
+        "intensity": 2
+    },
+    {
+        "id": 311,
+        "type": "truth",
+        "content": "Bạn thấy trào lưu (trend) nào trong 2 năm qua là 'nhảm nhí' nhất?",
+        "category": "social",
+        "intensity": 2
+    },
+    {
+        "id": 312,
+        "type": "truth",
+        "content": "Nếu được hoán đổi cuộc đời với một tỷ phú hoặc ngôi sao Hollywood, bạn chọn ai?",
+        "category": "imagination",
+        "intensity": 1
+    },
+    {
+        "id": 313,
+        "type": "truth",
+        "content": "Bạn đã bao giờ dùng ảnh của idol làm ảnh đại diện để đi 'combat' trên mạng chưa?",
+        "category": "secret",
+        "intensity": 2
+    },
+    {
+        "id": 314,
+        "type": "truth",
+        "content": "Đám cưới của nghệ sĩ nào khiến bạn cảm thấy 'ghen tị' hoặc ngưỡng mộ nhất?",
+        "category": "love",
+        "intensity": 1
+    },
+    {
+        "id": 400,
+        "type": "dare",
+        "content": "Gửi một tin nhắn trực tiếp (DM) cho idol bạn yêu thích nhất trên Instagram với nội dung: 'I love you so much!' (Mọi người cùng xem).",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 401,
+        "type": "dare",
+        "content": "Thực hiện lại động tác 'Flex' đang hot nhất hiện nay và chụp ảnh đăng story (không được xóa trong 15p).",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 402,
+        "type": "dare",
+        "content": "Hát 1 đoạn điệp khúc bài hát của BLACKPINK hoặc NewJeans bằng giọng... em bé.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 403,
+        "type": "dare",
+        "content": "Diễn lại gương mặt của một diễn viên trong cảnh phim kinh dị đang viral (ví dụ: Exhuma).",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 404,
+        "type": "dare",
+        "content": "Kể tên 10 bài hát của Sơn Tùng M-TP trong vòng 10 giây. Không được thì uống 2 hơi.",
+        "category": "physical",
+        "intensity": 2
+    },
+    {
+        "id": 405,
+        "type": "dare",
+        "content": "Làm một biểu cảm 'meme' nổi tiếng trên mạng trong 1 phút để mọi người đoán đó là meme gì.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 406,
+        "type": "dare",
+        "content": "Mở danh sách bài hát gần đây nhất (Recently Played) trên Spotify/YouTube và show cho cả bàn xem.",
+        "category": "social",
+        "intensity": 2
+    },
+    {
+        "id": 407,
+        "type": "dare",
+        "content": "Thử thách: Đứng dậy và catwalk như một siêu mẫu Miss Grand trong 1 vòng quanh phòng.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 408,
+        "type": "dare",
+        "content": "Gọi điện cho một người bạn và bắt họ phải hát cùng bạn bài hát 'Anh Trai Say Hi'.",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 409,
+        "type": "dare",
+        "content": "Để người bên phải dùng son môi vẽ một hình xăm 'cute' lên mặt bạn và giữ đến hết game.",
+        "category": "funny",
+        "intensity": 3
+    },
+    {
+        "id": 410,
+        "type": "dare",
+        "content": "Giả vờ đang nhận giải thưởng 'Nghệ sĩ của năm' và phát biểu cảm ơn thật sướt mướt.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 411,
+        "type": "dare",
+        "content": "Thực hiện động tác 'Wink' (nháy mắt) với tất cả mọi người trong phòng theo phong cách idol.",
+        "category": "funny",
+        "intensity": 1
+    },
+    {
+        "id": 412,
+        "type": "dare",
+        "content": "Đọc rap 4 câu bất kỳ của rapper HIEUTHUHAI hoặc MCK thật mượt.",
+        "category": "funny",
+        "intensity": 2
+    },
+    {
+        "id": 413,
+        "type": "dare",
+        "content": "Đưa điện thoại cho người bên trái, họ được quyền chọn một bài hát bất kỳ để bạn nhảy theo trong 1 phút.",
+        "category": "social",
+        "intensity": 3
+    },
+    {
+        "id": 414,
+        "type": "dare",
+        "content": "Chào mọi người theo phong cách của một hoa hậu đang đi thi quốc tế (Hô tên thành phố/quốc gia).",
+        "category": "funny",
+        "intensity": 1
     }
 ]

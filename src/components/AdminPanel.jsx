@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { ref, update } from 'firebase/database'
 
-export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOpenEditor, isAdmin, isModerator, roomState, roomId, localPlayers, onAddPlayer, onRemoveLocalPlayer }) {
+export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOpenEditor, onSyncData, isAdmin, isModerator, roomState, roomId, localPlayers, onAddPlayer, onRemoveLocalPlayer }) {
     const [isRolling, setIsRolling] = useState(false)
     const [rollingName, setRollingName] = useState('')
 
@@ -109,13 +109,24 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                                     {mode.name}
                                 </button>
                                 {mode.editable && (
-                                    <button
-                                        className="edit-content-btn"
-                                        onClick={() => onOpenEditor(mode.id)}
-                                        title="Chỉnh sửa nội dung"
-                                    >
-                                        ✎
-                                    </button>
+                                    <div className="mode-edit-actions">
+                                        <button
+                                            className="edit-content-btn"
+                                            onClick={() => onOpenEditor(mode.id)}
+                                            title="Chỉnh sửa nội dung"
+                                        >
+                                            ✎
+                                        </button>
+                                        {isAdmin && onSyncData && (
+                                            <button
+                                                className="edit-content-btn sync-btn"
+                                                onClick={() => onSyncData(mode.id)}
+                                                title="Hợp nhất dữ liệu mới nhất (Giữ lại các câu hỏi bạn đã thêm)"
+                                            >
+                                                🔄
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         ))}
@@ -219,28 +230,76 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                     <div className="grimoire-corner bl"></div>
                     <div className="grimoire-corner br"></div>
                     <h3>Tất cả người chơi (<span className="magic-number">{players.length}</span>)</h3>
+
                     <div className="player-list-admin">
-                        {players.map(player => {
-                            const isOnMyDevice = localPlayers?.some(lp => lp.id === player.id)
-                            return (
-                                <div key={player.id} className={`player-row ${isOnMyDevice ? 'on-my-device' : ''}`}>
-                                    <span className="nickname-admin">
-                                        {isOnMyDevice && <span className="my-device-indicator">📱</span>}
-                                        {player.nickname}
-                                        {player.isAdmin && <span className="mini-gold-crown">👑</span>}
-                                        {player.isModerator && <span className="mini-mod-badge">◈</span>}
-                                    </span>
-                                    {isAdmin && !player.isAdmin && !isOnMyDevice && (
-                                        <button
-                                            className="remove-btn"
-                                            onClick={() => onRemovePlayer(player.id)}
-                                        >
-                                            Đuổi
-                                        </button>
-                                    )}
-                                </div>
-                            )
-                        })}
+                        {[...players]
+                            .sort((a, b) => (roomState?.playerSlots?.[a.id] ?? 0) - (roomState?.playerSlots?.[b.id] ?? 0))
+                            .map((player, index, sortedArr) => {
+                                const isOnMyDevice = localPlayers?.some(lp => lp.id === player.id)
+
+                                const movePlayer = (dir) => {
+                                    const newArr = [...sortedArr]
+                                    const target = index + dir
+                                    if (target < 0 || target >= newArr.length) return
+
+                                    // Swap
+                                    [newArr[index], newArr[target]] = [newArr[target], newArr[index]]
+
+                                    const newSlots = {}
+                                    newArr.forEach((p, i) => { newSlots[p.id] = i })
+                                    update(ref(db, `rooms/${roomId}`), { playerSlots: newSlots })
+                                }
+
+                                const onDrop = (e) => {
+                                    e.preventDefault()
+                                    const fromIndex = parseInt(e.dataTransfer.getData("draggedIndex"))
+                                    if (isNaN(fromIndex) || fromIndex === index) return
+
+                                    const newArr = [...sortedArr]
+                                    const [draggedPlayer] = newArr.splice(fromIndex, 1)
+                                    newArr.splice(index, 0, draggedPlayer)
+
+                                    const newSlots = {}
+                                    newArr.forEach((p, i) => { newSlots[p.id] = i })
+                                    update(ref(db, `rooms/${roomId}`), { playerSlots: newSlots })
+                                }
+
+                                return (
+                                    <div
+                                        key={player.id}
+                                        className={`player-row ${isOnMyDevice ? 'on-my-device' : ''}`}
+                                        draggable={isAdmin || isModerator}
+                                        onDragStart={(e) => e.dataTransfer.setData("draggedIndex", index)}
+                                        onDragOver={(e) => e.preventDefault()}
+                                        onDrop={onDrop}
+                                    >
+                                        <div className="player-info-admin">
+                                            {(isAdmin || isModerator) && (
+                                                <div className="reorder-controls">
+                                                    <button className="reorder-btn" onClick={() => movePlayer(-1)} disabled={index === 0}>▴</button>
+                                                    <button className="reorder-btn" onClick={() => movePlayer(1)} disabled={index === sortedArr.length - 1}>▾</button>
+                                                    <div className="drag-handle">⠿</div>
+                                                </div>
+                                            )}
+                                            <span className="nickname-admin">
+                                                {isOnMyDevice && <span className="my-device-indicator">📱</span>}
+                                                {player.nickname}
+                                                {player.isAdmin && <span className="mini-gold-crown">👑</span>}
+                                                {player.isModerator && <span className="mini-mod-badge">◈</span>}
+                                            </span>
+                                        </div>
+
+                                        {isAdmin && !player.isAdmin && !isOnMyDevice && (
+                                            <button
+                                                className="remove-btn"
+                                                onClick={() => onRemovePlayer(player.id)}
+                                            >
+                                                Đuổi
+                                            </button>
+                                        )}
+                                    </div>
+                                )
+                            })}
                     </div>
                 </section>
             </div>
@@ -383,6 +442,18 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
                 }
                 
+                .mode-edit-actions {
+                    display: flex;
+                    gap: 4px;
+                }
+                .sync-btn {
+                    color: #4fc3f7;
+                    font-size: 0.7rem;
+                }
+                .sync-btn:hover {
+                    color: #81d4fa;
+                    border-color: #81d4fa;
+                }
                 .edit-content-btn { 
                     background: transparent;
                     border: 1px solid rgba(191,149,63,0.1); 
@@ -417,8 +488,53 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                     border-radius: 2px; 
                     font-size: 0.8rem; 
                     border: 1px solid rgba(191,149,63,0.05);
+                    transition: background 0.2s ease;
                 }
-                
+                .player-row:hover {
+                    background: rgba(255,255,255,0.04);
+                }
+
+                .player-info-admin {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex: 1;
+                }
+
+                .reorder-controls {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+
+                .reorder-btn {
+                    background: rgba(191,149,63,0.1);
+                    border: 1px solid rgba(191,149,63,0.2);
+                    color: var(--gold-light);
+                    padding: 2px 5px;
+                    cursor: pointer;
+                    font-size: 0.6rem;
+                    border-radius: 2px;
+                    transition: all 0.2s ease;
+                }
+                .reorder-btn:hover:not(:disabled) {
+                    background: var(--gold);
+                    color: #000;
+                }
+                .reorder-btn:disabled {
+                    opacity: 0.2;
+                    cursor: not-allowed;
+                }
+
+                .drag-handle {
+                    cursor: grab;
+                    color: var(--gold-dark);
+                    font-size: 0.9rem;
+                    margin-left: 4px;
+                    opacity: 0.5;
+                }
+                .drag-handle:active { cursor: grabbing; }
+
                 .remove-btn { 
                     background: transparent;
                     color: #ff5252; 
@@ -430,6 +546,7 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                     text-transform: uppercase;
                     letter-spacing: 1px;
                     transition: all 0.2s ease;
+                    margin-left: 10px;
                 }
                 .remove-btn:hover { background: #ff5252; color: white; border-color: #ff5252; }
                 

@@ -11,7 +11,7 @@ import ContentEditor from './components/ContentEditor'
 import DeepSecrets from './components/DeepSecrets'
 import SacredContract from './components/SacredContract'
 import { db } from './firebase'
-import { ref, onValue, set, update, onDisconnect, remove } from 'firebase/database'
+import { ref, onValue, set, update, onDisconnect, remove, get } from 'firebase/database'
 import { WILD_CARDS_DEFAULT, SPOTLIGHT_DEFAULT, TRIVIA_DEFAULT, DEEP_SECRETS_DEFAULT, GAME_SCHEMAS } from './data/defaults'
 import { TRUTH_OR_DARE_DATA } from './data/truthOrDare'
 
@@ -120,9 +120,17 @@ function App() {
   const everyoneSigned = players.length > 0 && players.every(p => currentSignatures[p.id] === true)
   const allLocalPlayersSigned = localPlayers.every(lp => currentSignatures[lp.id] === true)
 
+  const globalSignatures = roomState?.signatures?.global || {}
+  const everyoneSignedGlobal = players.length > 0 && players.every(p => globalSignatures[p.id] === true)
+
   // Signature-Gated Ritual Trigger (Host only)
   useEffect(() => {
     if (isAdmin && everyoneSigned && gameMode && gameMode !== 'party-room') {
+      // Auto-accept global oath if everyone has signed it
+      if (everyoneSignedGlobal && !roomState?.globalOathAccepted) {
+        update(ref(db, `rooms/${roomId}`), { globalOathAccepted: true })
+      }
+
       // Check if we already started the ritual for this specific mode
       if (roomState?.ritualStartedFor !== gameMode) {
         const randomIndex = Math.floor(Math.random() * players.length)
@@ -133,7 +141,7 @@ function App() {
         })
       }
     }
-  }, [isAdmin, everyoneSigned, gameMode, roomId, players.length, roomState?.ritualStartedFor])
+  }, [isAdmin, everyoneSigned, everyoneSignedGlobal, gameMode, roomId, players.length, roomState?.ritualStartedFor, roomState?.globalOathAccepted])
 
   const handleJoin = async (data) => {
     const { nickname, passcode } = data
@@ -240,7 +248,10 @@ function App() {
   const setGlobalMode = (mode) => {
     const updates = {
       gameMode: mode,
-      signatures: null,
+      signatures: {
+        ...roomState?.signatures,
+        [mode]: null // Only clear current mode signatures
+      },
       ritualStartedFor: null, // Reset ritual lock
       ...resetGameStates
     }
@@ -296,23 +307,87 @@ function App() {
   }
 
   const handleSkip = () => {
-    if (localPlayers.length === 0) return
-    // Use primary user for skip count tracking
-    const myPlayer = players.find(p => p.id === primaryUser?.id)
-    const currentSkips = myPlayer?.skipCount || 0
+    // Determine who has the current turn
+    const activeSlot = roomState?.activeTurnSlot || 0
+    const activePlayer = players.find((p, idx) => {
+      const slot = roomState?.playerSlots?.[p.id] !== undefined ? roomState?.playerSlots[p.id] : idx
+      return slot === activeSlot
+    })
+
+    if (!activePlayer) return
+
+    const currentSkips = activePlayer.skipCount || 0
     const nextSkips = currentSkips + 1
 
-    if (primaryUser) {
-      update(ref(db, `rooms/${roomId}/players/${primaryUser.id}`), {
-        skipCount: nextSkips
-      })
-    }
+    update(ref(db, `rooms/${roomId}/players/${activePlayer.id}`), {
+      skipCount: nextSkips
+    })
 
     advanceTurn()
   }
 
   const removePlayer = (playerId) => {
     remove(ref(db, `rooms/${roomId}/players/${playerId}`))
+  }
+
+  const handleSyncData = async (gameId) => {
+    const gameDefaults = {
+      'wild-cards': WILD_CARDS_DEFAULT,
+      'truth-or-dare': TRUTH_OR_DARE_DATA,
+      'spotlight': SPOTLIGHT_DEFAULT,
+      'trivia': TRIVIA_DEFAULT,
+      'deep-secrets': DEEP_SECRETS_DEFAULT
+    }
+    const localData = gameDefaults[gameId]
+    if (!localData) return
+
+    if (!window.confirm(`Bạn có muốn HỢP NHẤT (Merge) dữ liệu mới nhất cho ${gameId}? Các câu hỏi bạn đã thêm online sẽ được giữ lại, và các câu hỏi mới từ hệ thống sẽ được bổ sung.`)) {
+      return
+    }
+
+    try {
+      const snapshot = await get(ref(db, `content/${gameId}`))
+      const cloudData = snapshot.val()
+
+      let finalData
+
+      if (gameId === 'trivia') {
+        // Nested structure: { Category: { Level: [questions] } }
+        finalData = cloudData ? { ...cloudData } : {}
+
+        Object.keys(localData).forEach(cat => {
+          if (!finalData[cat]) finalData[cat] = {}
+          Object.keys(localData[cat]).forEach(lvl => {
+            if (!finalData[cat][lvl]) finalData[cat][lvl] = []
+
+            const localQuestions = localData[cat][lvl]
+            const cloudQuestions = finalData[cat][lvl]
+
+            localQuestions.forEach(lQ => {
+              const exists = cloudQuestions.some(cQ => cQ.q === lQ.q)
+              if (!exists) cloudQuestions.push(lQ)
+            })
+          })
+        })
+      } else {
+        // Array structure
+        finalData = cloudData ? [...cloudData] : []
+        localData.forEach(lItem => {
+          const lText = lItem.text || lItem.content || (typeof lItem === 'string' ? lItem : '')
+          const exists = finalData.some(cItem => {
+            const cText = cItem.text || cItem.content || (typeof cItem === 'string' ? cItem : '')
+            return cText === lText
+          })
+          if (!exists) finalData.push(lItem)
+        })
+      }
+
+      await set(ref(db, `content/${gameId}`), finalData)
+      alert('Đồng bộ thành công! Dữ liệu đã được hợp nhất.')
+    } catch (err) {
+      console.error("Sync error:", err)
+      alert('Lỗi đồng bộ: ' + err.message)
+    }
   }
 
   const openEditor = (gameId) => {
@@ -336,7 +411,14 @@ function App() {
     players: players,
     advanceTurn: advanceTurn,
     onSkip: handleSkip,
-    userSkipCount: players.find(p => p.id === primaryUser?.id)?.skipCount || 0,
+    userSkipCount: (() => {
+      const activeSlot = roomState?.activeTurnSlot || 0
+      const activePlayer = players.find((p, idx) => {
+        const slot = roomState?.playerSlots?.[p.id] !== undefined ? roomState?.playerSlots[p.id] : idx
+        return slot === activeSlot
+      })
+      return activePlayer?.skipCount || 0
+    })(),
     // New props for multi-player device support
     localPlayers: localPlayers,
     deviceId: deviceId
@@ -417,7 +499,14 @@ function App() {
               onSign={() => {
                 // Sign for all local players on this device
                 localPlayers.forEach(lp => {
-                  set(ref(db, `rooms/${roomId}/signatures/${gameMode}/${lp.id}`), true)
+                  const updates = {
+                    [`rooms/${roomId}/signatures/${gameMode}/${lp.id}`]: true
+                  }
+                  // Also sign global if not yet accepted
+                  if (!roomState?.globalOathAccepted) {
+                    updates[`rooms/${roomId}/signatures/global/${lp.id}`] = true
+                  }
+                  update(ref(db), updates)
                 })
               }}
               players={players}
@@ -425,6 +514,7 @@ function App() {
               currentUserId={primaryUser?.id}
               hasSigned={allLocalPlayersSigned}
               localPlayers={localPlayers}
+              showGlobalOath={!roomState?.globalOathAccepted}
             />
           )}
 
@@ -437,6 +527,7 @@ function App() {
                     onSelectMode={setGlobalMode}
                     onRemovePlayer={removePlayer}
                     onOpenEditor={openEditor}
+                    onSyncData={handleSyncData}
                     isAdmin={isAdmin}
                     isModerator={isModerator}
                     roomState={roomState}

@@ -9,7 +9,7 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
     const [pulsePos, setPulsePos] = useState(null)
     const [wispSlot, setWispSlot] = useState(null)
     const [isRitualActive, setIsRitualActive] = useState(false)
-    const [lastTriggeredTs, setLastTriggeredTs] = useState(0)
+    const lastHandledTsRef = useRef(0)
     const sceneRef = useRef(null)
     const ritualTimeoutRef = useRef(null)
 
@@ -26,13 +26,44 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
         const startTs = roomState?.gameStartTimestamp || 0
         const penaltyTs = roomState?.penaltyRitualTimestamp || 0
 
-        // Find whichever is newer
-        const activeTs = Math.max(startTs, penaltyTs)
-        const isPenalty = penaltyTs > startTs
-        const targetSlot = isPenalty ? roomState?.penaltyRitualSlot : activeTurnSlot
+        // 1. Handle NEW Penalty Ritual (Highest Priority)
+        if (penaltyTs > 0 && penaltyTs > lastHandledTsRef.current) {
+            lastHandledTsRef.current = penaltyTs
+            const targetSlot = roomState?.penaltyRitualSlot || 0
 
-        if (activeTs > 0 && activeTs !== lastTriggeredTs) {
-            setLastTriggeredTs(activeTs)
+            setIsRitualActive(true)
+            let startTime = Date.now()
+            const duration = 2800
+
+            const animate = () => {
+                const elapsed = Date.now() - startTime
+                const progress = elapsed / duration
+
+                if (progress < 1) {
+                    const totalSpins = 5
+                    const easedProgress = progress < 0.2
+                        ? Math.pow(progress / 0.2, 2) * 0.2
+                        : 1 - Math.pow(1 - progress, 2.2)
+
+                    const currentPos = (easedProgress * totalSpins * (numPlayers || 1)) + (targetSlot || 0)
+                    setWispSlot(currentPos % (numPlayers || 1))
+                    requestAnimationFrame(animate)
+                } else {
+                    setWispSlot(null)
+                    ritualTimeoutRef.current = setTimeout(() => {
+                        setIsRitualActive(false)
+                    }, 800)
+                }
+            }
+            requestAnimationFrame(animate)
+            return
+        }
+
+        // 2. Handle NEW Game Start Ritual (Only if no active penalty and it's fresh)
+        if (!penaltyTs && startTs > 0 && startTs > lastHandledTsRef.current) {
+            lastHandledTsRef.current = startTs
+            const targetSlot = roomState?.activeTurnSlot || 0
+
             setIsRitualActive(true)
             let startTime = Date.now()
             const duration = 2800
@@ -59,10 +90,9 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
             }
             requestAnimationFrame(animate)
         }
-        return () => {
-            if (ritualTimeoutRef.current) clearTimeout(ritualTimeoutRef.current)
-        }
-    }, [roomState?.gameStartTimestamp, roomState?.penaltyRitualTimestamp, roomState?.penaltyRitualSlot, numPlayers, activeTurnSlot])
+        // CRITICAL: We do NOT have activeTurnSlot in dependencies.
+        // We only respond to ritual events (Start or Penalty).
+    }, [roomState?.gameStartTimestamp, roomState?.penaltyRitualTimestamp, roomState?.penaltyRitualSlot, roomState?.activeTurnSlot, numPlayers])
 
     // Effect for turn transition pulse
     useEffect(() => {
@@ -234,14 +264,25 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                         style={{
                             left: '50%',
                             top: '50%',
-                            marginLeft: '-17.5px',
-                            marginTop: '-17.5px',
+                            marginLeft: '-22px',
+                            marginTop: '-22px',
                             transform: `rotate(${wispSlot * angleStep}deg) translateY(-280px)`,
                             zIndex: 9999
                         }}
                     >
-                        <div className="wisp-core"></div>
-                        <div className="wisp-trail"></div>
+                        <div className="wisp-aura"></div>
+                        <div className="wisp-trail-braid t1"></div>
+                        <div className="wisp-trail-braid t2"></div>
+                        <div className="wisp-trail-braid t3"></div>
+                        <div className="wisp-core">
+                            <div className="eye-sclera"></div>
+                            <div className="eye-iris"></div>
+                            <div className="eye-pupil"></div>
+                            <div className="eye-glint"></div>
+                        </div>
+                        <div className="wisp-sparkles">
+                            {[...Array(5)].map((_, i) => <div key={i} className={`wisp-spark s${i}`}></div>)}
+                        </div>
                     </div>
                 )}
             </div>
@@ -579,35 +620,183 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                     pointer-events: none;
                 }
                 
+                /* Wisp 2.0: The Ouroboros Soul */
                 .magic-wisp {
                     position: absolute;
-                    width: 35px;
-                    height: 35px;
-                    z-index: 1000;
+                    width: 44px;
+                    height: 44px;
+                    z-index: 10000;
                     pointer-events: none;
-                    filter: drop-shadow(0 0 30px var(--gold)) drop-shadow(0 0 10px #fff);
                 }
                 
+                .wisp-aura {
+                    position: absolute;
+                    inset: -20px;
+                    background: radial-gradient(circle, rgba(175, 82, 222, 0.3) 0%, transparent 70%);
+                    filter: blur(10px);
+                    animation: auraPulse 3s infinite ease-in-out;
+                    z-index: -1;
+                }
+
                 .wisp-core {
                     width: 100%;
                     height: 100%;
+                    background: radial-gradient(circle at 35% 35%, #fff 0%, #ffd700 30%, #bf953f 60%, #4a3b1a 100%);
+                    border-radius: 50%;
+                    position: relative;
+                    box-shadow: 
+                        0 0 30px rgba(255, 215, 0, 0.4), 
+                        inset -2px -2px 6px rgba(0,0,0,0.5);
+                    animation: wispPulse2 2s infinite ease-in-out, wispColorShift 8s infinite linear;
+                    z-index: 2;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                }
+
+                .eye-sclera {
+                    position: absolute;
+                    inset: 2px;
+                    border-radius: 50%;
+                    background: radial-gradient(circle, #af52de33 0%, #000 70%);
+                    z-index: 1;
+                }
+
+                .eye-iris {
+                    position: absolute;
+                    width: 80%;
+                    height: 80%;
+                    border-radius: 50%;
+                    background: conic-gradient(
+                        from 0deg,
+                        #bf953f 0deg,
+                        #ff2d55 90deg,
+                        #bf953f 180deg,
+                        #ff2d55 270deg,
+                        #bf953f 360deg
+                    );
+                    filter: blur(2px) contrast(1.5);
+                    opacity: 0.6;
+                    animation: irisRotate 4s infinite linear;
+                    z-index: 2;
+                }
+
+                .eye-pupil {
+                    position: absolute;
+                    width: 35%;
+                    height: 35%;
+                    background: #000;
+                    border-radius: 50%;
+                    z-index: 3;
+                    box-shadow: 0 0 10px rgba(175, 82, 222, 0.8), inset 0 0 5px #af52de;
+                    animation: pupilDilate 3s infinite ease-in-out;
+                }
+
+                .eye-glint {
+                    position: absolute;
+                    top: 25%;
+                    left: 25%;
+                    width: 6px;
+                    height: 6px;
                     background: #fff;
                     border-radius: 50%;
-                    box-shadow: 0 0 20px #fff, 0 0 40px var(--gold);
+                    filter: blur(1px);
+                    z-index: 4;
+                    opacity: 0.8;
+                    animation: glintShimmer 2s infinite alternate ease-in-out;
+                }
+
+                @keyframes irisRotate {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+
+                @keyframes pupilDilate {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.3); }
+                }
+
+                @keyframes glintShimmer {
+                    from { transform: translate(0, 0) scale(1); opacity: 0.6; }
+                    to { transform: translate(2px, -1px) scale(1.2); opacity: 0.9; }
+                }
+
+                /* Braided Trails */
+                .wisp-trail-braid {
+                    position: absolute;
+                    top: 50%; left: 50%;
+                    width: 250%; height: 250%;
+                    transform-origin: center;
+                    border-radius: 50%;
+                    mix-blend-mode: screen;
                 }
                 
-                .wisp-trail {
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    width: 60px;
-                    height: 4px;
-                    background: linear-gradient(to right, var(--gold), transparent);
-                    transform-origin: left center;
-                    transform: translate(-100%, -50%);
-                    opacity: 0.6;
-                    border-radius: 2px;
+                .t1 {
+                    background: conic-gradient(from 0deg, transparent 40%, rgba(191,149,63,0.6) 50%, transparent 60%);
+                    animation: wispTrailRotate 1s infinite linear;
                 }
+                .t2 {
+                    width: 200%; height: 200%;
+                    background: conic-gradient(from 120deg, transparent 40%, rgba(255, 45, 85, 0.4) 50%, transparent 60%);
+                    animation: wispTrailRotate 1.5s infinite linear reverse;
+                }
+                .t3 {
+                    width: 300%; height: 300%;
+                    background: conic-gradient(from 240deg, transparent 45%, rgba(175, 82, 222, 0.3) 50%, transparent 55%);
+                    animation: wispTrailRotate 3s infinite linear;
+                }
+
+                /* Sparkles */
+                .wisp-spark {
+                    position: absolute;
+                    width: 4px; height: 4px;
+                    background: #fff;
+                    border-radius: 50%;
+                    filter: blur(1px);
+                    box-shadow: 0 0 8px var(--gold);
+                    animation: wispSparkFloat 1s infinite ease-out;
+                    opacity: 0;
+                }
+                .s0 { top: 10%; left: 10%; animation-delay: 0.1s; }
+                .s1 { top: 80%; left: 20%; animation-delay: 0.3s; }
+                .s2 { top: 40%; left: 90%; animation-delay: 0.5s; }
+                .s3 { top: 90%; left: 70%; animation-delay: 0.7s; }
+                .s4 { top: 20%; left: 80%; animation-delay: 0.9s; }
+
+                @keyframes wispPulse2 {
+                    0%, 100% { transform: scale(1); filter: brightness(1); }
+                    50% { transform: scale(1.1); filter: brightness(1.3); }
+                }
+
+                @keyframes wispColorShift {
+                    0%, 100% { filter: hue-rotate(0deg); }
+                    33% { filter: hue-rotate(-20deg) saturate(1.5); } /* Redder */
+                    66% { filter: hue-rotate(40deg); } /* More Golden/Purple */
+                }
+
+                @keyframes auraPulse {
+                    0%, 100% { transform: scale(1); opacity: 0.3; }
+                    50% { transform: scale(1.3); opacity: 0.5; }
+                }
+
+                @keyframes wispTrailRotate {
+                    from { transform: translate(-50%, -50%) rotate(0deg); }
+                    to { transform: translate(-50%, -50%) rotate(360deg); }
+                }
+
+                @keyframes wispSparkFloat {
+                    0% { transform: translate(0, 0) scale(0); opacity: 0; }
+                    50% { opacity: 1; }
+                    100% { transform: translate(var(--tx, 20px), var(--ty, -20px)) scale(0); opacity: 0; }
+                }
+                
+                .wisp-spark:nth-child(1) { --tx: 30px; --ty: 20px; }
+                .wisp-spark:nth-child(2) { --tx: -25px; --ty: 35px; }
+                .wisp-spark:nth-child(3) { --tx: 40px; --ty: -30px; }
+                .wisp-spark:nth-child(4) { --tx: -35px; --ty: -25px; }
+                .wisp-spark:nth-child(5) { --tx: 20px; --ty: -40px; }
+
 
                 .active-turn .avatar-frame {
                     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
