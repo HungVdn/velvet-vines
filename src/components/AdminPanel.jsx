@@ -1,18 +1,57 @@
+import { useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { ref, update } from 'firebase/database'
 
-export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOpenEditor, isAdmin, isModerator, roomState, roomId }) {
+export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOpenEditor, isAdmin, isModerator, roomState, roomId, localPlayers, onAddPlayer, onRemoveLocalPlayer }) {
+    const [isRolling, setIsRolling] = useState(false)
+    const [rollingName, setRollingName] = useState('')
+
+    const globalRandomTimestamp = roomState?.globalRandomTimestamp || null
+
+    useEffect(() => {
+        if (globalRandomTimestamp) {
+            setIsRolling(true)
+            let timer = 0
+            const interval = setInterval(() => {
+                if (players.length > 0) {
+                    const randInd = Math.floor(Math.random() * players.length)
+                    setRollingName(players[randInd]?.nickname)
+                }
+                timer += 100
+                if (timer >= 2000) {
+                    clearInterval(interval)
+                    setIsRolling(false)
+                }
+            }, 100)
+            return () => clearInterval(interval)
+        }
+    }, [globalRandomTimestamp, players])
     const modes = [
         { id: 'party-room', name: 'Sảnh Chờ (Sắp xếp chỗ)', editable: false },
         { id: 'wild-cards', name: 'Lá Bài Hoang Dã', editable: true },
         { id: 'truth-or-dare', name: 'Sự thật hay Thách thức', editable: true },
         { id: 'spotlight', name: 'Tâm Điểm', editable: true },
         { id: 'trivia', name: 'Đố Vui Nhậu Nhẹt', editable: false },
+        { id: 'deep-secrets', name: 'Sâu Sắc & Chia Sẻ', editable: true },
     ]
 
     const handleUpdatePasscode = (newPasscode) => {
         if (!isAdmin) return
         update(ref(db, `rooms/${roomId}`), { joinPasscode: newPasscode })
+    }
+
+    const handleRandomPick = () => {
+        if (!isAdmin && !isModerator) return
+        if (players.length === 0) return
+        const picked = players[Math.floor(Math.random() * players.length)]
+        update(ref(db, `rooms/${roomId}`), {
+            globalRandomTarget: picked.nickname,
+            globalRandomTimestamp: Date.now()
+        })
+        // Clear after 8 seconds to not clutter the UI forever
+        setTimeout(() => {
+            update(ref(db, `rooms/${roomId}`), { globalRandomTarget: null, globalRandomTimestamp: null })
+        }, 8000)
     }
 
     const handleResetSession = () => {
@@ -23,12 +62,17 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                 todSeen: null,
                 spotlightSeen: null,
                 triviaSeen: null,
+                deepSecretsSeen: null,
                 wildCardsIndex: 0,
                 todIndex: 0,
                 triviaIndex: 0,
+                deepSecretsIndex: 0,
                 spotlightStarted: false,
+                spotlightRevealed: false,
+                spotlightCountdownStartTime: null,
                 wildCardsRevealed: false,
                 todRevealed: false,
+                deepSecretsRevealed: false,
                 triviaFeedback: null
             })
 
@@ -52,6 +96,11 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                             value={roomState?.joinPasscode || 'ForeverAlone'}
                             onChange={(e) => handleUpdatePasscode(e.target.value)}
                         />
+                    </div>
+                )}
+                {(roomState?.globalRandomTarget || isRolling) && (
+                    <div className={`global-random-reveal ${isRolling ? 'rolling' : 'animate-bounce'}`}>
+                        🎲 {isRolling ? 'Đang chọn...' : 'Ngẫu nhiên'}: <span className="gold-text">{isRolling ? rollingName : roomState?.globalRandomTarget}</span>
                     </div>
                 )}
             </div>
@@ -136,33 +185,83 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                         >
                             Làm mới dữ liệu (Chơi lại)
                         </button>
+
+                        <button
+                            className="premium-button"
+                            style={{ width: '100%', marginTop: '1rem', background: 'rgba(255, 40, 100, 0.2)', borderColor: '#ff2864', color: '#ff2864' }}
+                            onClick={handleRandomPick}
+                        >
+                            🎲 Chọn 1 người ngẫu nhiên
+                        </button>
                     </div>
                 </section>
+
+                {/* Local Players on This Device */}
+                {localPlayers && localPlayers.length > 0 && (
+                    <section className="local-players-section premium-card">
+                        <div className="grimoire-corner tl"></div>
+                        <div className="grimoire-corner tr"></div>
+                        <div className="grimoire-corner bl"></div>
+                        <div className="grimoire-corner br"></div>
+                        <h3>Trên điện thoại này (<span className="magic-number">{localPlayers.length}</span>)</h3>
+                        <div className="player-list-admin">
+                            {localPlayers.map(lp => (
+                                <div key={lp.id} className="player-row local-player">
+                                    <span className="nickname-admin">
+                                        📱 {lp.nickname}
+                                        {lp.isDeviceOwner && <span className="device-owner-badge">Chủ</span>}
+                                    </span>
+                                    {!lp.isDeviceOwner && onRemoveLocalPlayer && (
+                                        <button
+                                            className="remove-btn"
+                                            onClick={() => onRemoveLocalPlayer(lp.id)}
+                                        >
+                                            Xóa
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {onAddPlayer && (
+                            <button
+                                className="premium-button add-player-btn"
+                                style={{ width: '100%', marginTop: '10px', fontSize: '0.75rem' }}
+                                onClick={onAddPlayer}
+                            >
+                                + Thêm người chơi vào điện thoại này
+                            </button>
+                        )}
+                    </section>
+                )}
 
                 <section className="player-management premium-card">
                     <div className="grimoire-corner tl"></div>
                     <div className="grimoire-corner tr"></div>
                     <div className="grimoire-corner bl"></div>
                     <div className="grimoire-corner br"></div>
-                    <h3>Người chơi (<span className="magic-number">{players.length}</span>)</h3>
+                    <h3>Tất cả người chơi (<span className="magic-number">{players.length}</span>)</h3>
                     <div className="player-list-admin">
-                        {players.map(player => (
-                            <div key={player.id} className="player-row">
-                                <span className="nickname-admin">
-                                    {player.nickname}
-                                    {player.isAdmin && <span className="mini-gold-crown">👑</span>}
-                                    {player.isModerator && <span className="mini-mod-badge">◈</span>}
-                                </span>
-                                {isAdmin && !player.isAdmin && (
-                                    <button
-                                        className="remove-btn"
-                                        onClick={() => onRemovePlayer(player.id)}
-                                    >
-                                        Đuổi
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                        {players.map(player => {
+                            const isOnMyDevice = localPlayers?.some(lp => lp.id === player.id)
+                            return (
+                                <div key={player.id} className={`player-row ${isOnMyDevice ? 'on-my-device' : ''}`}>
+                                    <span className="nickname-admin">
+                                        {isOnMyDevice && <span className="my-device-indicator">📱</span>}
+                                        {player.nickname}
+                                        {player.isAdmin && <span className="mini-gold-crown">👑</span>}
+                                        {player.isModerator && <span className="mini-mod-badge">◈</span>}
+                                    </span>
+                                    {isAdmin && !player.isAdmin && !isOnMyDevice && (
+                                        <button
+                                            className="remove-btn"
+                                            onClick={() => onRemovePlayer(player.id)}
+                                        >
+                                            Đuổi
+                                        </button>
+                                    )}
+                                </div>
+                            )
+                        })}
                     </div>
                 </section>
             </div>
@@ -411,6 +510,38 @@ export default function AdminPanel({ players, onSelectMode, onRemovePlayer, onOp
                 @media (max-width: 600px) {
                     .mode-buttons { grid-template-columns: 1fr 1fr; }
                     .premium-card { padding: 1.5rem; }
+                }
+
+                .local-players-section { background: rgba(191,149,63,0.05); border-color: rgba(191,149,63,0.2); }
+                .local-player { background: rgba(191,149,63,0.08); }
+                .device-owner-badge { font-size: 0.6rem; background: var(--gold-gradient); color: #000; padding: 2px 6px; border-radius: 2px; margin-left: 8px; font-weight: 700; }
+                .my-device-indicator { margin-right: 6px; }
+                .on-my-device { border-color: rgba(191,149,63,0.3); background: rgba(191,149,63,0.05); }
+                .add-player-btn { background: rgba(191,149,63,0.15); border: 1px dashed rgba(191,149,63,0.4); color: var(--gold-light); }
+
+                .global-random-reveal {
+                    background: rgba(191,149,63,0.15);
+                    border: 1px solid var(--gold);
+                    padding: 8px 15px;
+                    border-radius: 4px;
+                    color: white;
+                    font-weight: 700;
+                    box-shadow: 0 0 20px rgba(191,149,63,0.3);
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    font-size: 0.8rem;
+                }
+
+                .global-random-reveal.rolling {
+                    border-style: solid;
+                    background: rgba(191,149,63,0.3);
+                    box-shadow: 0 0 30px rgba(191,149,63,0.5);
+                    animation: rollingBorderGlobal 0.2s infinite;
+                }
+                @keyframes rollingBorderGlobal {
+                    0% { border-color: var(--gold); }
+                    50% { border-color: #ff2864; }
+                    100% { border-color: var(--gold); }
                 }
             `}</style>
         </div>

@@ -30,6 +30,15 @@ export const SPOTLIGHT_DEFAULT = [
     { content: "Ai có khả năng sẽ bắt đầu màn nâng ly chúc mừng?" },
 ]
 
+export const DEEP_SECRETS_DEFAULT = [
+    { type: 'Chia sẻ', text: 'Hãy kể về một lần bạn cảm thấy tự hào nhất về bản thân trong năm qua.' },
+    { type: 'Bí mật', text: 'Điều gì là nỗi sợ lớn nhất của bạn mà ít người biết đến?' },
+    { type: 'Kỷ niệm', text: 'Món quà ý nghĩa nhất bạn từng nhận được là gì và tại sao?' },
+    { type: 'Chia sẻ', text: 'Nếu được quay lại quá khứ để thay đổi một quyết định, đó sẽ là gì?' },
+    { type: 'Bí mật', text: 'Tật xấu đáng yêu nhất của bạn là gì?' },
+    { type: 'Kỷ niệm', text: 'Lần cuối cùng bạn khóc vì hạnh phúc là khi nào?' }
+]
+
 export const TRIVIA_DEFAULT = {
     "Văn hóa Nhậu": {
         1: [
@@ -103,11 +112,22 @@ export const GAME_SCHEMAS = {
         { name: 'a3', label: 'Đáp án 3', type: 'text' },
         { name: 'a4', label: 'Đáp án 4', type: 'text' },
         { name: 'correct', label: 'Đáp án đúng (0-3)', type: 'text', default: '0' }
+    ],
+    'deep-secrets': [
+        {
+            name: 'type', label: 'Loại', type: 'select', options: [
+                { label: 'Chia sẻ', value: 'Chia sẻ' },
+                { label: 'Bí mật', value: 'Bí mật' },
+                { label: 'Kỷ niệm', value: 'Kỷ niệm' }
+            ], default: 'Chia sẻ'
+        },
+        { name: 'text', label: 'Nội dung', type: 'textarea' }
     ]
 }
 export const GAME_RULES = {
     'wild-cards': 'Mọi luật chơi mới đều là tối cao. Kẻ phá luật nhận án phạt nhỉnh hơn (Nhấp thêm 1 hơi).',
     'truth-or-dare': 'Sự thật là tuyệt đối. Thách thức là danh dự. Bỏ lượt quá 3 lần, định mệnh sẽ trừng phạt.',
     'spotlight': 'Lời buộc tội phải có căn cứ. Người bị chỉ định phải chấp hành hình phạt ngay lập tức.',
-    'trivia': 'Kiến thức là sức mạnh, chất cồn là thuốc thử. Trả lời sai, sầu não nhấp môi.'
+    'trivia': 'Kiến thức là sức mạnh, chất cồn là thuốc thử. Trả lời sai, sầu não nhấp môi.',
+    'deep-secrets': 'Sự chân thành là cầu nối của linh hồn. Hãy chia sẻ và lắng nghe bằng cả trái tim.'
 }

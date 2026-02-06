@@ -4,10 +4,14 @@ import { ref, update } from 'firebase/database'
 import logoOuroboros from '../assets/logo_ouroboros.png'
 import Ouroboros3D from './Ouroboros3D'
 
-export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState, activeGame }) {
+export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState, activeGame, localPlayers, onAddPlayer, onRemoveLocalPlayer }) {
     const [draggedId, setDraggedId] = useState(null)
     const [pulsePos, setPulsePos] = useState(null)
+    const [wispSlot, setWispSlot] = useState(null)
+    const [isRitualActive, setIsRitualActive] = useState(false)
+    const [lastTriggeredTs, setLastTriggeredTs] = useState(0)
     const sceneRef = useRef(null)
+    const ritualTimeoutRef = useRef(null)
 
     // Map of playerId -> slotIndex (0 to N-1)
     const playerSlots = roomState?.playerSlots || {}
@@ -16,6 +20,46 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
     const angleStep = 360 / Math.max(numPlayers, 1)
 
     const getSlotAngle = (slotIndex) => slotIndex * angleStep
+
+    // Cinematic Ritual Trigger
+    useEffect(() => {
+        const startTs = roomState?.gameStartTimestamp
+        if (startTs && startTs !== lastTriggeredTs) {
+            // Clock skew tolerant check: 20s window
+            const age = Math.abs(Date.now() - startTs)
+            if (age < 20000) {
+                setLastTriggeredTs(startTs)
+                setIsRitualActive(true)
+                let startTime = Date.now()
+                const duration = 2800 // 2.8 seconds ritual
+
+                const animate = () => {
+                    const elapsed = Date.now() - startTime
+                    const progress = elapsed / duration
+
+                    if (progress < 1) {
+                        const totalSpins = 5 // MUST be integer for correct modulo landing
+                        const easedProgress = progress < 0.2
+                            ? Math.pow(progress / 0.2, 2) * 0.2 // Initial ramp
+                            : 1 - Math.pow(1 - progress, 2.2) // Sharper ease out for precise landing
+
+                        const currentPos = (easedProgress * totalSpins * numPlayers) + (activeTurnSlot || 0)
+                        setWispSlot(currentPos % numPlayers)
+                        requestAnimationFrame(animate)
+                    } else {
+                        setWispSlot(null)
+                        ritualTimeoutRef.current = setTimeout(() => {
+                            setIsRitualActive(false)
+                        }, 800)
+                    }
+                }
+                requestAnimationFrame(animate)
+            }
+        }
+        return () => {
+            if (ritualTimeoutRef.current) clearTimeout(ritualTimeoutRef.current)
+        }
+    }, [roomState?.gameStartTimestamp, numPlayers, activeTurnSlot, lastTriggeredTs])
 
     // Effect for turn transition pulse
     useEffect(() => {
@@ -106,12 +150,23 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                             <div className="grain-overlay"></div>
                             <div className="table-shine"></div>
                             {activeGame && (
-                                <div className="game-stage animate-scale-in">
+                                <div className={`game-stage ${isRitualActive ? 'ritual-hidden' : 'animate-scale-in'}`}>
                                     {activeGame}
                                 </div>
                             )}
+                            {isRitualActive && wispSlot !== null && (
+                                <div
+                                    className="magic-wisp"
+                                    style={{
+                                        transform: `rotate(${wispSlot * angleStep}deg) translateY(-280px)`,
+                                    }}
+                                >
+                                    <div className="wisp-core"></div>
+                                    <div className="wisp-trail"></div>
+                                </div>
+                            )}
                         </div>
-                        {pulsePos !== null && (
+                        {pulsePos !== null && !isRitualActive && (
                             <div
                                 className="turn-pulse"
                                 style={{ transform: `rotate(${getSlotAngle(pulsePos)}deg)` }}
@@ -138,13 +193,13 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                         const radius = dynamicRadius;
                         const isDragging = draggedId === player.id;
                         const isActiveTurn = activeTurnSlot === slotIndex;
+                        const isOnMyDevice = localPlayers?.some(lp => lp.id === player.id);
 
-                        const hasSignedOath = roomState?.signatures?.[roomState?.gameMode]?.[player.id] === true
 
                         return (
                             <div
                                 key={player.id}
-                                className={`player-spot ${isDragging ? 'dragging' : ''} ${isAdmin ? 'admin-can-drag' : ''} ${isActiveTurn ? 'active-turn' : ''}`}
+                                className={`player-spot ${isDragging ? 'dragging' : ''} ${isAdmin ? 'admin-can-drag' : ''} ${isActiveTurn ? 'active-turn' : ''} ${isOnMyDevice ? 'on-my-device' : ''} ${isRitualActive ? 'ritual-active' : ''}`}
                                 onMouseDown={(e) => handleStartDrag(e, player.id)}
                                 onTouchStart={(e) => handleStartDrag(e, player.id)}
                                 style={{
@@ -158,8 +213,8 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                                     </div>
                                     <img src={logoOuroboros} className="ouroboros-frame" alt="" />
                                     {player.isAdmin && <span className="admin-crown">👑</span>}
+                                    {isOnMyDevice && <span className="my-device-badge">📱</span>}
                                     {isActiveTurn && <div className="turn-glow-ring"></div>}
-                                    {hasSignedOath && <span className="blood-oath-mark">🩸</span>}
                                     {(player.skipCount > 0 && roomState?.gameMode === 'truth-or-dare') && (
                                         <div className={`skip-badge ${player.skipCount >= 3 ? 'limit-reached' : ''}`}>
                                             {player.skipCount}/3
@@ -454,20 +509,6 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
                 }
 
-                .blood-oath-mark {
-                    position: absolute;
-                    top: -5px;
-                    left: -5px;
-                    font-size: 1rem;
-                    z-index: 10;
-                    filter: drop-shadow(0 0 5px #8e0000);
-                    animation: bloodPulse 2s infinite;
-                }
-
-                @keyframes bloodPulse {
-                    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px #8e0000); }
-                    50% { transform: scale(1.2); filter: drop-shadow(0 0 10px #ff0000); }
-                }
 
                 .skip-badge {
                     position: absolute;
@@ -499,6 +540,62 @@ export default function PartyRoom({ players, onBack, isAdmin, roomId, roomState,
                 }
 
                 .glass-indicator { display: none; } 
+
+                .my-device-badge {
+                    position: absolute;
+                    bottom: -8px;
+                    left: -8px;
+                    font-size: 0.9rem;
+                    z-index: 10;
+                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+                }
+
+                .on-my-device { border-color: rgba(191,149,63,0.3); background: rgba(191,149,63,0.05); }
+                .add-player-btn { background: rgba(191,149,63,0.15); border: 1px dashed rgba(191,149,63,0.4); color: var(--gold-light); }
+
+                /* Cinematic Ritual Styles */
+                .ritual-hidden {
+                    opacity: 0;
+                    transform: scale(0.8);
+                    pointer-events: none;
+                }
+                
+                .magic-wisp {
+                    position: absolute;
+                    width: 30px;
+                    height: 30px;
+                    z-index: 1000;
+                    pointer-events: none;
+                    filter: drop-shadow(0 0 20px var(--gold));
+                }
+                
+                .wisp-core {
+                    width: 100%;
+                    height: 100%;
+                    background: #fff;
+                    border-radius: 50%;
+                    box-shadow: 0 0 20px #fff, 0 0 40px var(--gold);
+                }
+                
+                .wisp-trail {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 60px;
+                    height: 4px;
+                    background: linear-gradient(to right, var(--gold), transparent);
+                    transform-origin: left center;
+                    transform: translate(-100%, -50%);
+                    opacity: 0.6;
+                    border-radius: 2px;
+                }
+
+                .active-turn .avatar-frame {
+                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                }
+                .active-turn:not(.ritual-active) .avatar-frame {
+                    transform: scale(1.15);
+                }
 
                 @media (max-width: 600px) {
                     .header-title { font-size: 2.2rem; }

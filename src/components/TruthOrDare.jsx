@@ -4,7 +4,7 @@ import { ref, update, onValue } from 'firebase/database'
 import { TRUTH_OR_DARE_DATA as DEFAULT_TOD } from '../data/truthOrDare'
 import logoOuroboros from '../assets/logo_ouroboros.png'
 
-export default function TruthOrDare({ onBack, isAdmin, isModerator, userId, roomId, roomState, players, advanceTurn, onSkip, userSkipCount }) {
+export default function TruthOrDare({ onBack, isAdmin, isModerator, userId, roomId, roomState, players, advanceTurn, onSkip, userSkipCount, localPlayers }) {
     const [cards, setCards] = useState(DEFAULT_TOD)
     const cardIndex = roomState?.todIndex || 0
     const filter = roomState?.todFilter || 'all'
@@ -16,7 +16,8 @@ export default function TruthOrDare({ onBack, isAdmin, isModerator, userId, room
         const slot = playerSlots[p.id] !== undefined ? playerSlots[p.id] : idx
         return slot === activeTurnSlot
     })
-    const isMyTurn = activePlayer?.id === userId
+    // Check if ANY local player on this device has the turn
+    const isMyTurn = localPlayers?.some(lp => lp.id === activePlayer?.id) || activePlayer?.id === userId
     const seenIndices = roomState?.todSeen || []
     const isFinished = seenIndices.length >= cards.length && cards.length > 0
     const isRevealed = roomState?.todRevealed || false
@@ -122,6 +123,9 @@ export default function TruthOrDare({ onBack, isAdmin, isModerator, userId, room
 
     return (
         <div className="game-stage-content animate-fade">
+            <div className={`turn-banner ${isMyTurn ? 'my-turn' : ''}`}>
+                {isMyTurn ? "Lượt của bạn! 👊" : `Lượt của: ${activePlayer?.nickname}`}
+            </div>
             <div className="card-display">
                 {!isRevealed ? (
                     <div className={`premium-card card-back ${isMyTurn ? 'my-turn-card' : ''}`} onClick={getRandomCard}>
@@ -352,6 +356,30 @@ export default function TruthOrDare({ onBack, isAdmin, isModerator, userId, room
           .game-card, .card-back { width: 220px; height: 320px; }
           .card-text { font-size: 1.1rem; }
         }
+
+        .turn-banner {
+            width: 100%;
+            text-align: center;
+            padding: 8px;
+            margin-bottom: 2rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: var(--gold-light);
+            font-family: var(--font-heading);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+        .turn-banner.my-turn {
+            background: rgba(191,149,63,0.15);
+            border-color: var(--gold);
+            color: var(--gold);
+            font-weight: 700;
+            box-shadow: 0 0 15px rgba(191,149,63,0.2);
+            animation: pulseBanner 2s infinite;
+        }
+        @keyframes pulseBanner { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
       `}</style>
         </div>
     )

@@ -191,6 +191,7 @@ h3 {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gold);
 }
+
 /* Skill: scroll-experience - Grimoire Page Flip */
 .grimoire-page-container {
   width: 100%;
@@ -211,6 +212,7 @@ h3 {
     transform: rotateY(90deg) scale(0.9);
     opacity: 0;
   }
+
   100% {
     transform: rotateY(0deg) scale(1);
     opacity: 1;

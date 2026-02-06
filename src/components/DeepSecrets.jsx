@@ -1,124 +1,123 @@
 import { useState, useEffect } from 'react'
 import { db } from '../firebase'
 import { ref, update, onValue } from 'firebase/database'
-import { WILD_CARDS_DEFAULT } from '../data/defaults'
+import { DEEP_SECRETS_DEFAULT } from '../data/defaults'
 import logoOuroboros from '../assets/logo_ouroboros.png'
 
-export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId, roomState, players, advanceTurn, localPlayers }) {
-  const [cards, setCards] = useState(WILD_CARDS_DEFAULT)
-  const cardIndex = roomState?.wildCardsIndex || 0
-  const activeTurnSlot = roomState?.activeTurnSlot || 0
-  const playerSlots = roomState?.playerSlots || {}
+export default function DeepSecrets({ onBack, isAdmin, isModerator, userId, roomId, roomState, players, advanceTurn, localPlayers }) {
+    const [cards, setCards] = useState(DEEP_SECRETS_DEFAULT)
+    const cardIndex = roomState?.deepSecretsIndex || 0
+    const activeTurnSlot = roomState?.activeTurnSlot || 0
+    const playerSlots = roomState?.playerSlots || {}
 
-  // Find who has the current turn
-  const activePlayer = players.find((p, idx) => {
-    const slot = playerSlots[p.id] !== undefined ? playerSlots[p.id] : idx
-    return slot === activeTurnSlot
-  })
-
-  useEffect(() => {
-    const contentRef = ref(db, 'content/wild-cards')
-    const unsubscribe = onValue(contentRef, (snapshot) => {
-      const data = snapshot.val()
-      if (data) {
-        setCards(Array.isArray(data) ? data : Object.values(data))
-      } else {
-        setCards(WILD_CARDS_DEFAULT)
-      }
+    // Find who has the current turn
+    const activePlayer = players.find((p, idx) => {
+        const slot = playerSlots[p.id] !== undefined ? playerSlots[p.id] : idx
+        return slot === activeTurnSlot
     })
-    return () => unsubscribe()
-  }, [])
 
-  const seenIndices = roomState?.wildCardsSeen || []
-  const isFinished = seenIndices.length >= cards.length && cards.length > 0
-  // Check if ANY local player on this device has the turn
-  const isMyTurn = localPlayers?.some(lp => lp.id === activePlayer?.id) || activePlayer?.id === userId
-  const currentCard = cards[cardIndex % cards.length]
-  const isRevealed = roomState?.wildCardsRevealed || false
+    useEffect(() => {
+        const contentRef = ref(db, 'content/deep-secrets')
+        const unsubscribe = onValue(contentRef, (snapshot) => {
+            const data = snapshot.val()
+            if (data) {
+                setCards(Array.isArray(data) ? data : Object.values(data))
+            } else {
+                setCards(DEEP_SECRETS_DEFAULT)
+            }
+        })
+        return () => unsubscribe()
+    }, [])
 
-  const drawCard = (e) => {
-    e.stopPropagation()
-    if (!isAdmin && !isModerator && !isMyTurn) return
-    if (isRevealed || isFinished) return
+    const seenIndices = roomState?.deepSecretsSeen || []
+    const isFinished = seenIndices.length >= cards.length && cards.length > 0
+    // Check if ANY local player on this device has the turn
+    const isMyTurn = localPlayers?.some(lp => lp.id === activePlayer?.id) || activePlayer?.id === userId
+    const currentCard = cards[cardIndex % cards.length]
+    const isRevealed = roomState?.deepSecretsRevealed || false
 
-    const unseen = cards.map((_, i) => i).filter(i => !seenIndices.includes(i))
-    if (unseen.length === 0) return
+    const drawCard = (e) => {
+        e.stopPropagation()
+        if (!isAdmin && !isModerator && !isMyTurn) return
+        if (isRevealed || isFinished) return
 
-    const nextIndex = unseen[Math.floor(Math.random() * unseen.length)]
+        const unseen = cards.map((_, i) => i).filter(i => !seenIndices.includes(i))
+        if (unseen.length === 0) return
 
-    update(ref(db, `rooms/${roomId}`), {
-      wildCardsIndex: nextIndex,
-      wildCardsRevealed: true,
-      wildCardsSeen: [...seenIndices, nextIndex]
-    })
-  }
+        const nextIndex = unseen[Math.floor(Math.random() * unseen.length)]
 
-  const handleAdvance = (e) => {
-    e.stopPropagation()
-    if (!isAdmin && !isModerator && !isMyTurn) return
-    update(ref(db, `rooms/${roomId}`), { wildCardsRevealed: false })
-    advanceTurn()
-  }
+        update(ref(db, `rooms/${roomId}`), {
+            deepSecretsIndex: nextIndex,
+            deepSecretsRevealed: true,
+            deepSecretsSeen: [...seenIndices, nextIndex]
+        })
+    }
 
-  const getDynamicFontSize = (text) => {
-    if (!text) return '1.25rem'
-    const length = text.length
-    if (length < 25) return '1.5rem'
-    if (length < 50) return '1.25rem'
-    if (length < 80) return '1.1rem'
-    if (length < 120) return '0.95rem'
-    return '0.85rem'
-  }
+    const handleAdvance = (e) => {
+        e.stopPropagation()
+        if (!isAdmin && !isModerator && !isMyTurn) return
+        update(ref(db, `rooms/${roomId}`), { deepSecretsRevealed: false })
+        advanceTurn()
+    }
 
-  if (isFinished) {
-    return (
-      <div className="game-stage-content animate-fade">
-        <div className="premium-card completion-card">
-          <h2 className="gold-text">Chúc mừng cả nhà! 🥂</h2>
-          <p style={{ margin: '1rem 0', fontSize: '0.9rem' }}>Tất cả các lá bài đã được lật mở.</p>
-          <p className="cheers-text">Cùng DÔ 100% nào! 🍻</p>
-          {(isAdmin || isModerator) && (
-            <button className="finish-btn" onClick={onBack}>Kết thúc game</button>
-          )}
-        </div>
-        <style jsx>{`
+    const getDynamicFontSize = (text) => {
+        if (!text) return '1.25rem'
+        const length = text.length
+        if (length < 25) return '1.5rem'
+        if (length < 50) return '1.25rem'
+        if (length < 80) return '1.1rem'
+        if (length < 120) return '0.95rem'
+        return '0.85rem'
+    }
+
+    if (isFinished) {
+        return (
+            <div className="game-stage-content animate-fade">
+                <div className="premium-card completion-card">
+                    <h2 className="gold-text">Sâu Sắc & Chia Sẻ 🥂</h2>
+                    <p style={{ margin: '1rem 0', fontSize: '0.9rem' }}>Tất cả các câu chuyện đã được kể.</p>
+                    <p className="cheers-text">Cùng nâng ly vì sự chân thành! 🍻</p>
+                    {(isAdmin || isModerator) && (
+                        <button className="finish-btn" onClick={onBack}>Kết thúc game</button>
+                    )}
+                </div>
+                <style jsx>{`
             .game-stage-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
             .completion-card { padding: 2rem; text-align: center; border: 2px solid var(--gold); background: rgba(0,0,0,0.9); border-radius: 20px; width: 250px; }
             .cheers-text { font-size: 1.2rem; margin-top: 1rem; font-weight: bold; color: var(--gold); }
             .finish-btn { margin-top: 1.5rem; background: var(--gold); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         `}</style>
-      </div>
-    )
-  }
-
-  return (
-    <div className="game-stage-content animate-fade">
-      <div className={`turn-banner ${isMyTurn ? 'my-turn' : ''}`}>
-        {isMyTurn ? "Lượt của bạn! 👊" : `Lượt của: ${activePlayer?.nickname}`}
-      </div>
-      <div className="card-display">
-        {!isRevealed ? (
-          <div className={`premium-card card-back ${isMyTurn ? 'my-turn-card' : ''}`} onClick={drawCard}>
-            <img src={logoOuroboros} className="card-logo-img" alt="Ouroboros" />
-            <p className="tap-hint">{isMyTurn ? "Chạm để bốc bài" : `Chờ ${activePlayer?.nickname}...`}</p>
-          </div>
-        ) : (
-          <div className={`premium-card game-card ${isMyTurn ? 'my-turn-card' : ''}`}>
-            <span className="card-type">{currentCard?.type}</span>
-            <p className="card-text" style={{ fontSize: getDynamicFontSize(currentCard?.text) }}>
-              {currentCard?.text}
-            </p>
-            <div className="action-stack">
-              {isAdmin || isModerator ? (
-                <button className="finish-btn" onClick={handleAdvance}>Xong - Qua lượt</button>
-              ) : null}
             </div>
-          </div>
-        )}
-      </div>
+        )
+    }
 
+    return (
+        <div className="game-stage-content animate-fade">
+            <div className={`turn-banner ${isMyTurn ? 'my-turn' : ''}`}>
+                {isMyTurn ? "Lượt của bạn! 👊" : `Lượt của: ${activePlayer?.nickname}`}
+            </div>
+            <div className="card-display">
+                {!isRevealed ? (
+                    <div className={`premium-card card-back ${isMyTurn ? 'my-turn-card' : ''}`} onClick={drawCard}>
+                        <img src={logoOuroboros} className="card-logo-img" alt="Ouroboros" />
+                        <p className="tap-hint">{isMyTurn ? "Chạm để bốc bài" : `Chờ ${activePlayer?.nickname}...`}</p>
+                    </div>
+                ) : (
+                    <div className={`premium-card game-card ${isMyTurn ? 'my-turn-card' : ''}`}>
+                        <span className="card-type">{currentCard?.type}</span>
+                        <p className="card-text" style={{ fontSize: getDynamicFontSize(currentCard?.text) }}>
+                            {currentCard?.text}
+                        </p>
+                        <div className="action-stack">
+                            {isAdmin || isModerator ? (
+                                <button className="finish-btn" onClick={handleAdvance}>Xong - Qua lượt</button>
+                            ) : null}
+                        </div>
+                    </div>
+                )}
+            </div>
 
-      <style jsx>{`
+            <style jsx>{`
         .game-stage-content { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         
         .my-turn-card { border-color: #fff !important; box-shadow: 0 0 30px rgba(175, 144, 67, 0.6) !important; animation: glowPulse 2.5s ease-in-out infinite; }
@@ -206,11 +205,6 @@ export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId
           border-color: var(--gold-light);
         }
 
-        .card-back::after {
-          content: "";
-          display: none;
-        }
-
         .card-logo-img {
           width: 120px;
           height: 120px;
@@ -263,10 +257,6 @@ export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId
           box-shadow: 0 8px 20px rgba(175, 144, 67, 0.3);
         }
 
-        .finish-btn:active {
-          transform: translateY(0) scale(0.98);
-        }
-
         @keyframes cardSlide {
           from { transform: translateY(40px) rotateX(20deg); opacity: 0; }
           to { transform: translateY(0) rotateX(0); opacity: 1; }
@@ -281,55 +271,9 @@ export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId
             padding-bottom: 0;
         }
 
-        .skip-penalty-btn {
-            background: rgba(42, 27, 10, 0.05);
-            border: 1px solid rgba(175, 144, 67, 0.3);
-            color: #795548;
-            padding: 8px 16px;
-            border-radius: 2px;
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            font-family: var(--font-heading);
-            cursor: pointer;
-            font-weight: 700;
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-        }
-
-        .skip-penalty-btn::before {
-            content: "";
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(142, 0, 0, 0.1), transparent);
-            transition: 0.5s;
-        }
-
-        .skip-penalty-btn:hover:not(:disabled)::before {
-            left: 100%;
-        }
-
-        .skip-penalty-btn:hover:not(:disabled) {
-            background: rgba(142, 0, 0, 0.08);
-            border-color: #8e0000;
-            color: #8e0000;
-            box-shadow: 0 4px 12px rgba(142, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .skip-penalty-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            border-style: dotted;
-        }
-
         @media (max-width: 600px) {
           .game-card, .card-back { width: 200px; height: 280px; }
           .card-text { font-size: 1.1rem; }
-          .card-logo { font-size: 3rem; }
         }
 
         .turn-banner {
@@ -356,6 +300,6 @@ export default function WildCards({ onBack, isAdmin, isModerator, userId, roomId
         }
         @keyframes pulseBanner { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
       `}</style>
-    </div>
-  )
+        </div>
+    )
 }

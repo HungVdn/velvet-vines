@@ -4,12 +4,12 @@ import { ref, update, onValue, set } from 'firebase/database'
 import { TRIVIA_DEFAULT } from '../data/defaults'
 import logoOuroboros from '../assets/logo_ouroboros.png'
 
-export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, roomId, roomState, players, advanceTurn }) {
+export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, roomId, roomState, players, advanceTurn, localPlayers }) {
     const [triviaData, setTriviaData] = useState(TRIVIA_DEFAULT)
     const [localTime, setLocalTime] = useState(0)
 
     // Sync states from Firebase
-    const phase = roomState?.triviaPhase || 'category' // category, level, pre-reveal, thinking, answering, result
+    const phase = roomState?.triviaPhase || 'category' // category, level, pre-reveal, thinking, time-up, result
     const selectedCategory = roomState?.triviaCategory || null
     const selectedLevel = roomState?.triviaLevel || null
     const currentQ = roomState?.triviaQuestion || null
@@ -17,6 +17,11 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
     const timerDuration = roomState?.triviaTimerDuration || 0
     const feedback = roomState?.triviaFeedback || null
     const selectedAnswer = roomState?.triviaSelectedAnswer || null
+    const randomTarget = roomState?.triviaRandomTarget || null
+    const randomTimestamp = roomState?.triviaRandomTimestamp || null
+
+    const [isRolling, setIsRolling] = useState(false)
+    const [rollingName, setRollingName] = useState('')
 
     const playerSlots = roomState?.playerSlots || {}
     const activeTurnSlot = roomState?.activeTurnSlot || 0
@@ -24,8 +29,32 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
         const slot = playerSlots[p.id] !== undefined ? playerSlots[p.id] : idx
         return slot === activeTurnSlot
     })
-    const isMyTurn = activePlayer?.id === userId
-    const canControl = isAdmin || isModerator || isMyTurn
+    // Check if ANY local player on this device has the turn
+    const isMyTurn = localPlayers?.some(lp => lp.id === activePlayer?.id) || activePlayer?.id === userId
+
+    // Split permissions
+    const canPlay = isMyTurn
+    const canControl = isAdmin || isModerator || isMyTurn // Can pick category, unseal card
+    const canFacilitate = isAdmin || isModerator // ONLY Admins/Moderators can reveal answers and advance turns
+
+    useEffect(() => {
+        if (randomTimestamp) {
+            setIsRolling(true)
+            let timer = 0
+            const interval = setInterval(() => {
+                if (players.length > 0) {
+                    const randInd = Math.floor(Math.random() * players.length)
+                    setRollingName(players[randInd]?.nickname)
+                }
+                timer += 100
+                if (timer >= 2000) {
+                    clearInterval(interval)
+                    setIsRolling(false)
+                }
+            }, 100)
+            return () => clearInterval(interval)
+        }
+    }, [randomTimestamp, players])
 
     useEffect(() => {
         const contentRef = ref(db, 'content/trivia_v2')
@@ -49,27 +78,29 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
                 const remaining = Math.max(0, timerDuration - elapsed)
                 setLocalTime(remaining)
 
-                if (remaining <= 0 && canControl) {
+                if (remaining <= 0 && canFacilitate) {
                     if (phase === 'thinking') {
-                        startAnswering()
-                    } else if (phase === 'answering') {
-                        revealResult(null) // Timeout
+                        // Time ended, move to "time-up" phase (waiting for reveal)
+                        update(ref(db, `rooms/${roomId}`), {
+                            triviaPhase: 'time-up',
+                            triviaTimerStart: null
+                        })
                     }
                 }
             }, 100)
         }
         return () => clearInterval(interval)
-    }, [timerStart, phase, timerDuration, canControl])
+    }, [timerStart, phase, timerDuration, canFacilitate])
 
     useEffect(() => {
         // Reset trivia state when the turn changes
-        if (canControl) {
+        if (canFacilitate) {
             resetGame()
         }
     }, [activeTurnSlot])
 
     const selectCategory = (cat) => {
-        if (!canControl) return
+        if (!canControl) return // Admins or active player can select category
         update(ref(db, `rooms/${roomId}`), {
             triviaCategory: cat,
             triviaPhase: 'level'
@@ -88,32 +119,34 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
     }
 
     const revealQuestion = () => {
-        if (!canControl) return
+        if (!canControl) return // Any control-capable player can start thinking phase
         update(ref(db, `rooms/${roomId}`), {
             triviaPhase: 'thinking',
             triviaTimerStart: Date.now(),
-            triviaTimerDuration: 10 // 10 seconds to think
+            triviaTimerDuration: 30 // 30 seconds to think
         })
     }
 
-    const startAnswering = () => {
-        if (!canControl) return
-        update(ref(db, `rooms/${roomId}`), {
-            triviaPhase: 'answering',
-            triviaTimerStart: Date.now(),
-            triviaTimerDuration: 15 // 15 seconds to answer
-        })
-    }
-
-    const revealResult = (ansIndex) => {
-        if (!canControl) return
-        const isCorrect = ansIndex === currentQ.correct
+    const showAnswer = () => {
+        if (!canFacilitate) return
         update(ref(db, `rooms/${roomId}`), {
             triviaPhase: 'result',
-            triviaSelectedAnswer: ansIndex,
-            triviaFeedback: isCorrect ? 'CHÍNH XÁC! 🏆' : (ansIndex === null ? 'HẾT GIỜ! ⏳' : 'SAI RỒI! 🍷')
+            triviaFeedback: 'ĐÁP ÁN LÀ... 🥁'
         })
     }
+
+    const pickRandomPenalty = () => {
+        if (!canControl) return
+        const otherPlayers = players.filter(p => true)
+        if (otherPlayers.length === 0) return
+        const picked = otherPlayers[Math.floor(Math.random() * otherPlayers.length)]
+        update(ref(db, `rooms/${roomId}`), {
+            triviaRandomTarget: picked.nickname,
+            triviaRandomTimestamp: Date.now()
+        })
+    }
+
+    // Removed startAnswering and reveaResult logic as we don't pick answers anymore
 
     const resetGame = () => {
         update(ref(db, `rooms/${roomId}`), {
@@ -123,18 +156,25 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
             triviaQuestion: null,
             triviaTimerStart: null,
             triviaFeedback: null,
-            triviaSelectedAnswer: null
+            triviaSelectedAnswer: null,
+            triviaRandomTarget: null,
+            triviaRandomTimestamp: null
         })
     }
 
     const renderPhase = () => {
         switch (phase) {
-            case 'category':
+            case 'category': {
+                const validCategories = Object.keys(triviaData).filter(cat => {
+                    const levels = triviaData[cat]
+                    return Object.values(levels).some(qList => Array.isArray(qList) && qList.length > 0)
+                })
+
                 return (
                     <div className="selection-screen animate-fade">
                         <h3 className="gold-text">Chọn Chủ Đề</h3>
                         <div className="options-grid">
-                            {Object.keys(triviaData).map(cat => (
+                            {validCategories.map(cat => (
                                 <button key={cat} className="premium-button cat-btn" onClick={() => selectCategory(cat)}>
                                     {cat}
                                 </button>
@@ -142,14 +182,20 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
                         </div>
                     </div>
                 )
-            case 'level':
+            }
+            case 'level': {
+                const validLevels = [1, 2, 3].filter(lv => {
+                    const qList = triviaData[selectedCategory]?.[lv]
+                    return Array.isArray(qList) && qList.length > 0
+                })
+
                 return (
                     <div className="selection-screen animate-fade">
                         <button className="back-mini" onClick={() => update(ref(db, `rooms/${roomId}`), { triviaPhase: 'category' })}>← Đổi chủ đề</button>
                         <h3 className="gold-text">{selectedCategory}</h3>
                         <p className="subtitle pink-text">Chọn độ khó</p>
                         <div className="level-grid">
-                            {[1, 2, 3].map(lv => (
+                            {validLevels.map(lv => (
                                 <button key={lv} className={`level-btn lv-${lv}`} onClick={() => selectLevel(lv)}>
                                     Cấp {lv}
                                 </button>
@@ -157,64 +203,95 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
                         </div>
                     </div>
                 )
+            }
             case 'pre-reveal':
                 return (
                     <div className="card-reveal-screen animate-fade" onClick={revealQuestion}>
-                        <div className="premium-card face-down-card">
+                        <div className={`premium-card face-down-card ${canControl ? 'interactive' : ''}`}>
                             <div className="ouroboros-stamp" style={{ backgroundImage: `url(${logoOuroboros})` }}></div>
-                            <p className="tap-hint">Chạm để giải ấn câu hỏi</p>
+                            <p className="tap-hint">{canControl ? "Chạm để giải ấn câu hỏi" : `Chờ ${activePlayer?.nickname} hoặc Host...`}</p>
                         </div>
                     </div>
                 )
             case 'thinking':
-            case 'answering':
+            case 'time-up':
             case 'result':
                 const options = [currentQ.a1, currentQ.a2, currentQ.a3, currentQ.a4].filter(Boolean)
                 return (
                     <div className="active-game-screen animate-fade">
                         <div className="timer-container">
-                            <div className="timer-label">{phase === 'thinking' ? 'Đang suy nghĩ...' : 'Trả lời ngay!'}</div>
-                            <div className="timer-bar">
-                                <div className="timer-fill" style={{ width: `${(localTime / timerDuration) * 100}%` }}></div>
-                            </div>
-                            <div className="timer-value">{localTime}s</div>
+                            {phase === 'thinking' ? (
+                                <>
+                                    <div className="timer-label">Thời gian suy nghĩ</div>
+                                    <div className="timer-bar">
+                                        <div className="timer-fill" style={{ width: `${(localTime / timerDuration) * 100}%` }}></div>
+                                    </div>
+                                    <div className="timer-value">{localTime}s</div>
+                                </>
+                            ) : (
+                                <div className="timer-value ended">HẾT GIỜ! ⌛</div>
+                            )}
                         </div>
 
                         <div className={`premium-card trivia-play-card ${phase === 'result' ? 'result-mode' : ''}`}>
                             <p className="question-text">{currentQ.q}</p>
 
                             <div className="options-stack">
-                                {options.map((opt, i) => {
-                                    let btnClass = ""
-                                    if (phase === 'result') {
-                                        if (i === currentQ.correct) btnClass = "correct"
-                                        else if (i === selectedAnswer) btnClass = "wrong"
-                                    }
-                                    return (
-                                        <button
-                                            key={i}
-                                            className={`trivia-option ${btnClass}`}
-                                            onClick={() => revealResult(i)}
-                                            disabled={!canControl || phase !== 'answering'}
-                                        >
-                                            <span className="opt-letter">{String.fromCharCode(65 + i)}</span>
-                                            <span className="opt-text">{opt}</span>
-                                        </button>
-                                    )
-                                })}
+                                {phase === 'result' && (
+                                    <div className="trivia-option correct revealed">
+                                        <span className="opt-letter">✓</span>
+                                        <span className="opt-text">{[currentQ.a1, currentQ.a2, currentQ.a3, currentQ.a4][currentQ.correct]}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {phase === 'result' && (
-                            <div className="result-controls animate-fade">
-                                <h2 className="feedback-text gold-text">{feedback}</h2>
-                                {(isAdmin || isModerator) ? (
-                                    <button className="premium-button" onClick={advanceTurn}>Tiếp tục - Sang lượt</button>
+                        {/* Control Area */}
+                        <div className="result-controls animate-fade" style={{ marginTop: '2rem' }}>
+                            {/* Phase: Thinking - Just show text */}
+                            {phase === 'thinking' && (
+                                <p className="subtitle blink">Đang suy nghĩ...</p>
+                            )}
+
+                            {/* Phase: Time Up - Show Reveal Button */}
+                            {phase === 'time-up' && (
+                                canFacilitate ? (
+                                    <button className="premium-button pulse-btn" onClick={showAnswer}>
+                                        Chạm để xem đáp án 👁️
+                                    </button>
                                 ) : (
-                                    <p className="subtitle">Chờ Quản trị viên chuyển lượt...</p>
-                                )}
-                            </div>
-                        )}
+                                    <p className="subtitle pink-text">Chờ chủ xị mở đáp án... 👁️</p>
+                                )
+                            )}
+
+                            {/* Phase: Result - Show Next Button & Random Tool */}
+                            {phase === 'result' && (
+                                <div className="animate-fade">
+                                    <h2 className="feedback-text gold-text" style={{ fontSize: '1.5rem' }}>{feedback}</h2>
+
+                                    {(randomTarget || isRolling) && (
+                                        <div className={`random-target-reveal ${isRolling ? 'rolling' : 'animate-bounce'}`}>
+                                            🎯 Mục tiêu: <span className="pink-text">{isRolling ? rollingName : randomTarget}</span>
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '1.5rem' }}>
+                                        {canControl && (
+                                            <button className="premium-button random-btn" onClick={pickRandomPenalty}>
+                                                {randomTarget ? "Chọn lại 🎲" : "Chọn nạn nhân 🎲"}
+                                            </button>
+                                        )}
+                                        {canFacilitate && (
+                                            <button className="premium-button" onClick={advanceTurn}>Tiếp tục - Sang lượt</button>
+                                        )}
+                                    </div>
+
+                                    {!canControl && !canFacilitate && (
+                                        <p className="subtitle gold-text">Chờ Quản trị viên chuyển lượt... ✨</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )
             default: return null
@@ -225,6 +302,9 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
         <div className="game-container trivia-overhaul">
             {(isAdmin || isModerator) && <button className="back-button" onClick={onBack}>← Sảnh chờ</button>}
             <h2 className="gold-text main-title">Đố Vui Nhậu Nhẹt</h2>
+            <div className={`turn-banner ${isMyTurn ? 'my-turn' : ''}`}>
+                {isMyTurn ? "Lượt của bạn! 👊" : `Lượt của: ${activePlayer?.nickname}`}
+            </div>
             <div className="trivia-content">
                 {renderPhase()}
             </div>
@@ -299,10 +379,46 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
                     transition: all 0.3s ease;
                     cursor: pointer;
                 }
-                .trivia-option:hover:not(:disabled) { background: rgba(191,149,63,0.05); border-color: var(--gold-dark); }
-                .trivia-option.correct { background: rgba(46, 125, 50, 0.2); border-color: #4caf50; color: #81c784; }
-                .trivia-option.wrong { background: rgba(198, 40, 40, 0.2); border-color: #ef5350; color: #e57373; }
+                .trivia-option:hover:not(.static-option) { background: rgba(191,149,63,0.05); border-color: var(--gold-dark); }
+                .trivia-option.static-option { cursor: default; }
+                .trivia-option.correct.revealed { background: rgba(46, 125, 50, 0.4); border-color: #4caf50; color: #fff; box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); transform: scale(1.02); }
+                .trivia-option.dimmed { opacity: 0.5; }
+                
+                .timer-value.ended { color: #ef5350; letter-spacing: 2px; font-size: 1.2rem; font-weight: 700; }
+                .pulse-btn { animation: pulseBtn 1.5s infinite; }
+                @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(191,149,63,0.4); } 100% { transform: scale(1); } }
+                .blink { animation: blinkText 1.5s infinite; }
+                @keyframes blinkText { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
                 .opt-letter { font-family: var(--font-magic); font-size: 1.2rem; margin-right: 15px; color: var(--gold); opacity: 0.7; }
+
+                .random-target-reveal {
+                    background: rgba(191,149,63,0.1);
+                    border: 1px dashed var(--gold);
+                    padding: 10px;
+                    border-radius: 4px;
+                    margin-bottom: 1rem;
+                    color: var(--gold-light);
+                    font-weight: 700;
+                    font-size: 1.1rem;
+                    min-height: 48px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                }
+                .random-target-reveal.rolling {
+                    border-style: solid;
+                    background: rgba(191,149,63,0.2);
+                    box-shadow: inset 0 0 20px rgba(191,149,63,0.2);
+                    animation: rollingBorder 0.2s infinite;
+                }
+                @keyframes rollingBorder {
+                    0% { border-color: var(--gold); }
+                    50% { border-color: #ff2864; }
+                    100% { border-color: var(--gold); }
+                }
+                .random-btn { background: rgba(255, 40, 100, 0.1); border-color: #ff2864; color: #ff2864; }
+                .random-btn:hover { background: rgba(255, 40, 100, 0.2); }
 
                 .result-controls { margin-top: 3rem; text-align: center; }
                 .feedback-text { font-size: 2rem; margin-bottom: 1.5rem; font-family: var(--font-magic); text-shadow: 0 0 10px var(--gold); }
@@ -320,6 +436,29 @@ export default function DrunkTrivia({ onBack, isAdmin, isModerator, userId, room
                     font-size: 0.7rem;
                     letter-spacing: 1px;
                 }
+                .turn-banner {
+                    width: 100%;
+                    text-align: center;
+                    padding: 8px;
+                    margin-bottom: 1rem;
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid var(--glass-border);
+                    color: var(--gold-light);
+                    font-family: var(--font-heading);
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    font-size: 0.9rem;
+                    border-radius: 4px;
+                }
+                .turn-banner.my-turn {
+                    background: rgba(191,149,63,0.15);
+                    border-color: var(--gold);
+                    color: var(--gold);
+                    font-weight: 700;
+                    box-shadow: 0 0 15px rgba(191,149,63,0.2);
+                    animation: pulseBanner 2s infinite;
+                }
+                @keyframes pulseBanner { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
             `}</style>
         </div>
     )
